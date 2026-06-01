@@ -1,0 +1,41 @@
+.spotify-widget {
+	position: absolute;
+	top: 0.5rem;
+	right: 0.5rem;
+	z-index: 10;
+}
+
+.spotify-widget-inner {
+	position: relative;
+	width: 200px;
+	height: 200px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.spotify-circular-text {
+	position: absolute;
+	inset: 0;
+}
+
+.spotify-album-link {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	border-radius: 50%;
+	display: block;
+}
+
+.spotify-logo {
+	display: block;
+	width: 88px;
+	height: 88px;
+	cursor: pointer;
+	transition: transform 0.2s ease;
+}
+
+.spotify-logo:hover {
+	transform: scale(1.06);
+}
