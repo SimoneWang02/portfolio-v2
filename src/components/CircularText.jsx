@@ -11,20 +11,13 @@ export default function CircularText({
 	const rotation = useMotionValue(0);
 
 	useEffect(() => {
-		let cancelled = false;
-		function spin(from) {
-			if (cancelled) return;
-			animate(rotation, from - 360, {
-				duration: spinDuration,
-				ease: "linear",
-				onComplete: () => spin(from + 360),
-			});
-		}
-		spin(0);
-		return () => {
-			cancelled = true;
-			rotation.stop?.();
-		};
+		const controls = animate(rotation, -360, {
+			duration: spinDuration,
+			ease: "linear",
+			repeat: Infinity,
+			repeatType: "loop",
+		});
+		return () => controls.stop();
 	}, [spinDuration]);
 
 	const radius = 60;
