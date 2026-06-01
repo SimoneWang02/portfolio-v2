@@ -81,6 +81,21 @@
 	filter: brightness(3) contrast(0.75);
 }
 
+
+.hero-corner {
+	position: absolute;
+	z-index: 2;
+	font-family: "Big Shoulders Display", sans-serif;
+	font-size: 1.1rem;
+	font-weight: 500;
+	letter-spacing: 0.25em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.9);
+	pointer-events: none;
+}
+
+
+
 .sr-only {
 	position: absolute;
 	width: 1px;

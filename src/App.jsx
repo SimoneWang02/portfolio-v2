@@ -3,6 +3,7 @@ import gsap from "gsap";
 import Silk from "./components/Silk";
 import CardSwap, { Card } from "./components/CardSwap";
 import SpotifyWidget from "./components/SpotifyWidget";
+import TextType from "./components/TextType";
 import "./App.css";
 
 const TOTAL_SLIDES = 3;
@@ -47,11 +48,33 @@ const projectCards = [
 
 export default function App() {
 	const [currentSlide, setCurrentSlide] = useState(0);
+	const [heroTextBounds, setHeroTextBounds] = useState(null);
 	const sliderRef = useRef(null);
 	const isAnimating = useRef(false);
 	const timelineItemsRef = useRef([]);
 	const timelineAnimated = useRef(false);
 	const silkTime = useRef(0);
+	const heroTextRef = useRef(null);
+
+	useEffect(() => {
+		const measure = () => {
+			if (!heroTextRef.current) return;
+			const bbox = heroTextRef.current.getBBox();
+			const gap = 20;
+			setHeroTextBounds({
+				left: bbox.x,
+				right: window.innerWidth - (bbox.x + bbox.width),
+				topAbove: bbox.y - gap,
+				topBelow: bbox.y + bbox.height + gap,
+			});
+		};
+		const id = setTimeout(measure, 100);
+		window.addEventListener("resize", measure);
+		return () => {
+			clearTimeout(id);
+			window.removeEventListener("resize", measure);
+		};
+	}, []);
 
 	useEffect(() => {
 		let last = performance.now();
@@ -129,7 +152,14 @@ export default function App() {
 				<section className="slide slide-hero">
 					{/* Silk 1 — background */}
 					<div className="silk-bg">
-						<Silk color="#003a53" speed={4} scale={1.2} noiseIntensity={1.2} rotation={0} sharedTime={silkTime} />
+						<Silk
+							color="#003a53"
+							speed={4}
+							scale={1.2}
+							noiseIntensity={1.2}
+							rotation={0}
+							sharedTime={silkTime}
+						/>
 					</div>
 
 					{/* SVG mask: white text shape on black */}
@@ -149,15 +179,45 @@ export default function App() {
 								</text>
 							</mask>
 						</defs>
+						<text
+							ref={heroTextRef}
+							className="hero-mask-text"
+							x="50%"
+							y="50%"
+							textAnchor="middle"
+							dominantBaseline="middle"
+							visibility="hidden"
+						>
+							Simone Wang
+						</text>
 					</svg>
 
 					{/* Silk 2 — same props, white, visible only through name */}
 					<div className="silk-name-overlay">
-						<Silk color="#ffffff" speed={4} scale={1.2} noiseIntensity={1.2} rotation={0} sharedTime={silkTime} />
+						<Silk
+							color="#ffffff"
+							speed={4}
+							scale={1.2}
+							noiseIntensity={1.2}
+							rotation={0}
+							sharedTime={silkTime}
+						/>
 					</div>
 
+					<TextType
+						text={["Fullstack Developer", "4+ years of experience"]}
+						as="span"
+						typingSpeed={75}
+						pauseDuration={1500}
+						deletingSpeed={50}
+						showCursor
+						cursorCharacter="_"
+						cursorBlinkDuration={0.5}
+						className="hero-corner hero-corner--br"
+						style={heroTextBounds ? { right: heroTextBounds.right, top: heroTextBounds.topBelow } : undefined}
+					/>
 					<SpotifyWidget />
-				<h1 className="sr-only">Simone Wang</h1>
+					<h1 className="sr-only">Simone Wang</h1>
 				</section>
 
 				{/* Section 2 — Timeline */}
