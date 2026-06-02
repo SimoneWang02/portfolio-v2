@@ -39,3 +39,15 @@
 .spotify-logo:hover {
 	transform: scale(1.06);
 }
+
+@media (max-width: 768px) {
+	.spotify-widget-inner {
+		width: 130px;
+		height: 130px;
+	}
+
+	.spotify-logo {
+		width: 56px;
+		height: 56px;
+	}
+}

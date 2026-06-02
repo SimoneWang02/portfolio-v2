@@ -6,6 +6,7 @@ export default function CircularText({
 	text = "",
 	spinDuration = 20,
 	className = "",
+	radius = 60,
 }) {
 	const letters = Array.from(text);
 	const rotation = useMotionValue(0);
@@ -19,8 +20,6 @@ export default function CircularText({
 		});
 		return () => controls.stop();
 	}, [spinDuration]);
-
-	const radius = 60;
 
 	return (
 		<motion.div

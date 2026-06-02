@@ -16,3 +16,14 @@
 	color: rgba(255, 255, 255, 0.7);
 	transform-origin: 50% 50%;
 }
+
+@media (max-width: 768px) {
+	.circular-text {
+		width: 130px;
+		height: 130px;
+	}
+
+	.circular-text span {
+		font-size: 0.65rem;
+	}
+}

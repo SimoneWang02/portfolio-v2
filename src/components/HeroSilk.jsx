@@ -94,7 +94,7 @@ function useTextMask(text) {
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, w, h);
 
-      const fontSize = Math.max(64, Math.min(144, w * 0.1));
+      const fontSize = w <= 768 ? w * 0.2 : Math.max(64, Math.min(144, w * 0.1));
       ctx.font = `400 ${fontSize}px "Big Shoulders Display", sans-serif`;
       if ('letterSpacing' in ctx) ctx.letterSpacing = `${(-0.02 * fontSize).toFixed(2)}px`;
       ctx.fillStyle = '#fff';

@@ -359,3 +359,13 @@
 .nav-dot:hover:not(.active) {
 	background: rgba(255, 255, 255, 0.45);
 }
+
+@media (max-width: 768px) {
+	.hero-mask-text {
+		font-size: 20vw;
+	}
+
+	.hero-corner {
+		font-size: 0.9rem;
+	}
+}

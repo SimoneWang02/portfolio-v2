@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import CircularText from "./CircularText";
 import "./SpotifyWidget.css";
 
@@ -5,6 +6,14 @@ const PLAYLIST_URL = "https://open.spotify.com/playlist/0IamXpR2rWtV79y70wCevA";
 const CIRCULAR_LABEL = "JUDGE ME BY MY PLAYLIST · ";
 
 export default function SpotifyWidget() {
+	const [radius, setRadius] = useState(() => window.innerWidth <= 768 ? 38 : 60);
+
+	useEffect(() => {
+		const onResize = () => setRadius(window.innerWidth <= 768 ? 38 : 60);
+		window.addEventListener("resize", onResize);
+		return () => window.removeEventListener("resize", onResize);
+	}, []);
+
 	return (
 		<div className="spotify-widget">
 			<div className="spotify-widget-inner">
@@ -12,6 +21,7 @@ export default function SpotifyWidget() {
 					text={CIRCULAR_LABEL}
 					spinDuration={18}
 					className="spotify-circular-text"
+					radius={radius}
 				/>
 				<a
 					href={PLAYLIST_URL}
