@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import gsap from "gsap";
-import Silk from "./components/Silk";
+import HeroSilk from "./components/HeroSilk";
 import CardSwap, { Card } from "./components/CardSwap";
 import SpotifyWidget from "./components/SpotifyWidget";
 import TextType from "./components/TextType";
@@ -53,7 +53,6 @@ export default function App() {
 	const isAnimating = useRef(false);
 	const timelineItemsRef = useRef([]);
 	const timelineAnimated = useRef(false);
-	const silkTime = useRef(0);
 	const heroTextRef = useRef(null);
 
 	useEffect(() => {
@@ -74,18 +73,6 @@ export default function App() {
 			clearTimeout(id);
 			window.removeEventListener("resize", measure);
 		};
-	}, []);
-
-	useEffect(() => {
-		let last = performance.now();
-		let raf;
-		const tick = (now) => {
-			silkTime.current += 0.1 * ((now - last) / 1000);
-			last = now;
-			raf = requestAnimationFrame(tick);
-		};
-		raf = requestAnimationFrame(tick);
-		return () => cancelAnimationFrame(raf);
 	}, []);
 
 	const goTo = useCallback(
@@ -150,35 +137,11 @@ export default function App() {
 			<div ref={sliderRef} className="slider">
 				{/* Section 1 — Hero */}
 				<section className="slide slide-hero">
-					{/* Silk 1 — background */}
-					<div className="silk-bg">
-						<Silk
-							color="#003a53"
-							speed={4}
-							scale={1.2}
-							noiseIntensity={1.2}
-							rotation={0}
-							sharedTime={silkTime}
-						/>
-					</div>
+					{/* Single canvas: bg + text overlay in one render pass */}
+					<HeroSilk />
 
-					{/* SVG mask: white text shape on black */}
+					{/* Invisible SVG text — used only for bounds measurement */}
 					<svg className="hero-mask-svg" aria-hidden="true">
-						<defs>
-							<mask id="heroNameMask">
-								<rect width="100%" height="100%" fill="black" />
-								<text
-									className="hero-mask-text"
-									x="50%"
-									y="50%"
-									textAnchor="middle"
-									dominantBaseline="middle"
-									fill="white"
-								>
-									Simone Wang
-								</text>
-							</mask>
-						</defs>
 						<text
 							ref={heroTextRef}
 							className="hero-mask-text"
@@ -192,20 +155,13 @@ export default function App() {
 						</text>
 					</svg>
 
-					{/* Silk 2 — same props, white, visible only through name */}
-					<div className="silk-name-overlay">
-						<Silk
-							color="#ffffff"
-							speed={4}
-							scale={1.2}
-							noiseIntensity={1.2}
-							rotation={0}
-							sharedTime={silkTime}
-						/>
-					</div>
-
 					<TextType
-						text={["Fullstack Developer", "4+ years of experience"]}
+						text={[
+							"Fullstack Developer",
+							"React + Laravel",
+							"4 years building web apps",
+							"Shipped 8 production apps",
+						]}
 						as="span"
 						typingSpeed={75}
 						pauseDuration={1500}
@@ -214,8 +170,52 @@ export default function App() {
 						cursorCharacter="_"
 						cursorBlinkDuration={0.5}
 						className="hero-corner hero-corner--br"
-						style={heroTextBounds ? { right: heroTextBounds.right, top: heroTextBounds.topBelow } : undefined}
+						style={
+							heroTextBounds
+								? {
+										right: heroTextBounds.right,
+										top: heroTextBounds.topBelow,
+									}
+								: undefined
+						}
 					/>
+
+					<div
+						className="hero-social"
+						style={
+							heroTextBounds
+								? {
+										left: heroTextBounds.left,
+										top: heroTextBounds.topAbove + 10,
+										transform: "translateY(-100%)",
+									}
+								: undefined
+						}
+					>
+						<a
+							href="https://gitlab.com/Zoubie"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="social-icon-link social-icon-link--gitlab"
+							aria-label="GitLab"
+						>
+							<svg className="social-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+								<path d="M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 0 1-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 0 1 4.82 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.49h8.1l2.44-7.51A.42.42 0 0 1 18.6 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.51L23 13.45a.84.84 0 0 1-.35.94z" />
+							</svg>
+						</a>
+						<a
+							href="https://www.linkedin.com/in/simone-wang-b7024a256"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="social-icon-link social-icon-link--linkedin"
+							aria-label="LinkedIn"
+						>
+							<svg className="social-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+								<path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+							</svg>
+						</a>
+					</div>
+
 					<SpotifyWidget />
 					<h1 className="sr-only">Simone Wang</h1>
 				</section>

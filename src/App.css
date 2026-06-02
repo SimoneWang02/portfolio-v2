@@ -72,16 +72,6 @@
 	letter-spacing: -0.02em;
 }
 
-.silk-name-overlay {
-	position: absolute;
-	inset: 0;
-	z-index: 1;
-	mask: url(#heroNameMask);
-	-webkit-mask: url(#heroNameMask);
-	filter: brightness(3) contrast(0.75);
-}
-
-
 .hero-corner {
 	position: absolute;
 	z-index: 2;
@@ -105,6 +95,42 @@
 	clip: rect(0, 0, 0, 0);
 	white-space: nowrap;
 	border-width: 0;
+}
+
+.hero-social {
+	position: absolute;
+	z-index: 2;
+	display: flex;
+	gap: 20px;
+	align-items: center;
+}
+
+.social-icon-link {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: rgba(255, 255, 255, 0.8);
+	text-decoration: none;
+	transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.social-icon-link:hover {
+	transform: scale(1.12);
+}
+
+.social-icon-link--gitlab:hover {
+	color: #fc6d26;
+}
+
+.social-icon-link--linkedin:hover {
+	color: #0a66c2;
+}
+
+.social-icon {
+	width: 28px;
+	height: 28px;
+	fill: currentColor;
+	display: block;
 }
 
 .hero-tagline {
