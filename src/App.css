@@ -76,7 +76,7 @@
 	position: absolute;
 	z-index: 2;
 	font-family: "Big Shoulders Display", sans-serif;
-	font-size: 1.1rem;
+	font-size: 1.2rem;
 	font-weight: 500;
 	letter-spacing: 0.25em;
 	text-transform: uppercase;
@@ -335,13 +335,7 @@
 /* ── Nav dots ─────────────────────────────────────────── */
 
 .nav-dots {
-	position: fixed;
-	bottom: 32px;
-	left: 50%;
-	transform: translateX(-50%);
-	display: flex;
-	gap: 10px;
-	z-index: 100;
+	display: none;
 }
 
 .nav-dot {
