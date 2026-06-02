@@ -46,14 +46,67 @@ const projectCards = [
 	{ title: "Project Seven", sub: "Svelte · Three.js · GLSL" },
 ];
 
+function ScrollHint({ isLandscape, direction = "next", onClick }) {
+	const isNext = direction === "next";
+	let points;
+	if (isLandscape) {
+		points = isNext ? "9,6 15,12 9,18" : "15,6 9,12 15,18";
+	} else {
+		points = isNext ? "6,9 12,15 18,9" : "6,15 12,9 18,15";
+	}
+
+	const cls = isLandscape
+		? isNext ? "scroll-hint--h-next" : "scroll-hint--h-prev"
+		: isNext ? "scroll-hint--v-next" : "scroll-hint--v-prev";
+
+	return (
+		<button
+			className={`scroll-hint ${cls}`}
+			onClick={onClick}
+			aria-label={isNext ? "Next section" : "Previous section"}
+		>
+			<svg
+				className="scroll-hint-icon"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			>
+				<polyline points={points} />
+			</svg>
+		</button>
+	);
+}
+
 export default function App() {
 	const [currentSlide, setCurrentSlide] = useState(0);
 	const [heroTextBounds, setHeroTextBounds] = useState(null);
+	const [isLandscape, setIsLandscape] = useState(
+		() => window.matchMedia("(orientation: landscape)").matches,
+	);
 	const sliderRef = useRef(null);
 	const isAnimating = useRef(false);
 	const timelineItemsRef = useRef([]);
 	const timelineAnimated = useRef(false);
 	const heroTextRef = useRef(null);
+
+	useEffect(() => {
+		const mq = window.matchMedia("(orientation: landscape)");
+		const handler = (e) => setIsLandscape(e.matches);
+		mq.addEventListener("change", handler);
+		return () => mq.removeEventListener("change", handler);
+	}, []);
+
+	// Snap to current slide on the new axis when orientation changes
+	useEffect(() => {
+		if (!sliderRef.current) return;
+		gsap.set(sliderRef.current, {
+			x: isLandscape ? -currentSlide * window.innerWidth : 0,
+			y: isLandscape ? 0 : -currentSlide * window.innerHeight,
+		});
+	}, [isLandscape]);
 
 	useEffect(() => {
 		const measure = () => {
@@ -84,7 +137,8 @@ export default function App() {
 			setCurrentSlide(index);
 
 			gsap.to(sliderRef.current, {
-				x: -index * window.innerWidth,
+				x: isLandscape ? -index * window.innerWidth : 0,
+				y: isLandscape ? 0 : -index * window.innerHeight,
 				duration: 0.9,
 				ease: "power4.inOut",
 				onComplete: () => {
@@ -110,7 +164,7 @@ export default function App() {
 				}, 600);
 			}
 		},
-		[currentSlide],
+		[currentSlide, isLandscape],
 	);
 
 	useEffect(() => {
@@ -131,6 +185,39 @@ export default function App() {
 		window.addEventListener("wheel", onWheel, { passive: true });
 		return () => window.removeEventListener("wheel", onWheel);
 	}, [currentSlide, goTo]);
+
+	// Touch swipe support
+	useEffect(() => {
+		let touchStartX = 0;
+		let touchStartY = 0;
+
+		const onTouchStart = (e) => {
+			touchStartX = e.touches[0].clientX;
+			touchStartY = e.touches[0].clientY;
+		};
+
+		const onTouchEnd = (e) => {
+			const dx = touchStartX - e.changedTouches[0].clientX;
+			const dy = touchStartY - e.changedTouches[0].clientY;
+
+			if (isLandscape) {
+				if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+					goTo(currentSlide + (dx > 0 ? 1 : -1));
+				}
+			} else {
+				if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 50) {
+					goTo(currentSlide + (dy > 0 ? 1 : -1));
+				}
+			}
+		};
+
+		window.addEventListener("touchstart", onTouchStart, { passive: true });
+		window.addEventListener("touchend", onTouchEnd, { passive: true });
+		return () => {
+			window.removeEventListener("touchstart", onTouchStart);
+			window.removeEventListener("touchend", onTouchEnd);
+		};
+	}, [currentSlide, goTo, isLandscape]);
 
 	return (
 		<div className="viewport">
@@ -218,6 +305,8 @@ export default function App() {
 
 					<SpotifyWidget />
 					<h1 className="sr-only">Simone Wang</h1>
+
+					<ScrollHint isLandscape={isLandscape} direction="next" onClick={() => goTo(1)} />
 				</section>
 
 				{/* Section 2 — Timeline */}
@@ -254,10 +343,13 @@ export default function App() {
 							))}
 						</div>
 					</div>
+
+					<ScrollHint isLandscape={isLandscape} direction="prev" onClick={() => goTo(0)} />
+					<ScrollHint isLandscape={isLandscape} direction="next" onClick={() => goTo(2)} />
 				</section>
 
 				{/* Section 3 — Projects */}
-				<section className="slide slide-projects">
+				<section className="slide slide-projects" style={{ position: "relative" }}>
 					<div className="projects-left">
 						<span className="section-index">03</span>
 						<h2 className="section-title">Projects</h2>
@@ -292,6 +384,7 @@ export default function App() {
 							))}
 						</CardSwap>
 					</div>
+					<ScrollHint isLandscape={isLandscape} direction="prev" onClick={() => goTo(1)} />
 				</section>
 			</div>
 
