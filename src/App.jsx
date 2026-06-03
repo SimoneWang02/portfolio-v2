@@ -1,4 +1,10 @@
-import { useRef, useState, useEffect, useCallback } from "react";
+import {
+	useRef,
+	useState,
+	useEffect,
+	useLayoutEffect,
+	useCallback,
+} from "react";
 import gsap from "gsap";
 import HeroSilk from "./components/HeroSilk";
 import CardSwap, { Card } from "./components/CardSwap";
@@ -7,6 +13,7 @@ import TextType from "./components/TextType";
 import "./App.css";
 
 const TOTAL_SLIDES = 3;
+const STRIP_COLORS = ["#006895", "#004A6B"];
 
 const timelineItems = [
 	{
@@ -56,8 +63,12 @@ function ScrollHint({ isLandscape, direction = "next", onClick }) {
 	}
 
 	const cls = isLandscape
-		? isNext ? "scroll-hint--h-next" : "scroll-hint--h-prev"
-		: isNext ? "scroll-hint--v-next" : "scroll-hint--v-prev";
+		? isNext
+			? "scroll-hint--h-next"
+			: "scroll-hint--h-prev"
+		: isNext
+			? "scroll-hint--v-next"
+			: "scroll-hint--v-prev";
 
 	return (
 		<button
@@ -86,7 +97,8 @@ export default function App() {
 	const [isLandscape, setIsLandscape] = useState(
 		() => window.matchMedia("(orientation: landscape)").matches,
 	);
-	const sliderRef = useRef(null);
+	const slideRefs = useRef([]);
+	const stripRefs = useRef([]);
 	const isAnimating = useRef(false);
 	const timelineItemsRef = useRef([]);
 	const timelineAnimated = useRef(false);
@@ -99,12 +111,31 @@ export default function App() {
 		return () => mq.removeEventListener("change", handler);
 	}, []);
 
-	// Snap to current slide on the new axis when orientation changes
+	// Initialise strips and slides off-screen before first paint
+	useLayoutEffect(() => {
+		gsap.set(stripRefs.current, { xPercent: 110 });
+		slideRefs.current.forEach((el, i) => {
+			if (i === 0) {
+				gsap.set(el, { xPercent: 0, yPercent: 0, zIndex: 1 });
+			} else {
+				gsap.set(el, { xPercent: 110, yPercent: 0, zIndex: 0 });
+			}
+		});
+	}, []);
+
+	// Re-snap all slides to the correct axis when orientation changes
 	useEffect(() => {
-		if (!sliderRef.current) return;
-		gsap.set(sliderRef.current, {
-			x: isLandscape ? -currentSlide * window.innerWidth : 0,
-			y: isLandscape ? 0 : -currentSlide * window.innerHeight,
+		if (isAnimating.current) return;
+		slideRefs.current.forEach((el, i) => {
+			if (i === currentSlide) {
+				gsap.set(el, { xPercent: 0, yPercent: 0 });
+			} else {
+				const sign = i > currentSlide ? 1 : -1;
+				gsap.set(el, {
+					xPercent: isLandscape ? sign * 110 : 0,
+					yPercent: isLandscape ? 0 : sign * 110,
+				});
+			}
 		});
 	}, [isLandscape]);
 
@@ -133,36 +164,97 @@ export default function App() {
 			if (isAnimating.current || index === currentSlide) return;
 			if (index < 0 || index >= TOTAL_SLIDES) return;
 
+			const direction = index > currentSlide ? 1 : -1;
 			isAnimating.current = true;
-			setCurrentSlide(index);
 
-			gsap.to(sliderRef.current, {
-				x: isLandscape ? -index * window.innerWidth : 0,
-				y: isLandscape ? 0 : -index * window.innerHeight,
-				duration: 0.9,
-				ease: "power4.inOut",
+			const strips = stripRefs.current;
+			const newSlide = slideRefs.current[index];
+			const oldSlide = slideRefs.current[currentSlide];
+			const landscape = isLandscape;
+
+			gsap.killTweensOf([...strips, newSlide]);
+
+			const fromXPercent = landscape ? direction * 110 : 0;
+			const fromYPercent = landscape ? 0 : direction * 110;
+
+			// New section comes in on top (z-index 10), strips at z-index 5 via overlay
+			gsap.set(newSlide, {
+				xPercent: fromXPercent,
+				yPercent: fromYPercent,
+				zIndex: 10,
+			});
+			gsap.set(oldSlide, { zIndex: 0 });
+			gsap.set(strips, {
+				xPercent: fromXPercent,
+				yPercent: fromYPercent,
+			});
+
+			// ReactBits staggered-menu timing: strips stagger at 0.07s, panel follows at lastStrip+0.08s
+			const STAGGER = 0.07;
+			const STRIP_DUR = 0.5;
+			const PANEL_DUR = 0.65;
+			const panelAt = (strips.length - 1) * STAGGER + 0.08;
+
+			const tl = gsap.timeline({
 				onComplete: () => {
 					isAnimating.current = false;
+					setCurrentSlide(index);
+					// Park old slide off-screen, reset z-indices
+					gsap.set(oldSlide, {
+						xPercent: landscape ? -direction * 110 : 0,
+						yPercent: landscape ? 0 : -direction * 110,
+						zIndex: 0,
+					});
+					gsap.set(newSlide, { zIndex: 1 });
+					// Strips hidden behind new slide — reset off-screen silently
+					gsap.set(strips, {
+						xPercent: fromXPercent,
+						yPercent: fromYPercent,
+					});
+					if (index === 1 && !timelineAnimated.current) {
+						timelineAnimated.current = true;
+						gsap.fromTo(
+							timelineItemsRef.current,
+							{ opacity: 0, y: 40 },
+							{
+								opacity: 1,
+								y: 0,
+								duration: 0.7,
+								ease: "power3.out",
+								stagger: 0.12,
+							},
+						);
+					}
 				},
 			});
 
-			if (index === 1 && !timelineAnimated.current) {
-				timelineAnimated.current = true;
-				setTimeout(() => {
-					gsap.fromTo(
-						timelineItemsRef.current,
-						{ opacity: 0, y: 40 },
-						{
-							opacity: 1,
-							y: 0,
-							duration: 0.7,
-							ease: "power3.out",
-							stagger: 0.12,
-							delay: 0.3,
-						},
-					);
-				}, 600);
-			}
+			// Pre-layers stagger in (same as ReactBits sm-prelayer animation)
+			strips.forEach((strip, i) => {
+				tl.fromTo(
+					strip,
+					{ xPercent: fromXPercent, yPercent: fromYPercent },
+					{
+						xPercent: 0,
+						yPercent: 0,
+						duration: STRIP_DUR,
+						ease: "power4.out",
+					},
+					i * STAGGER,
+				);
+			});
+
+			// New section slides in last, overlapping strips mid-flight (like the menu panel)
+			tl.fromTo(
+				newSlide,
+				{ xPercent: fromXPercent, yPercent: fromYPercent },
+				{
+					xPercent: 0,
+					yPercent: 0,
+					duration: PANEL_DUR,
+					ease: "power4.out",
+				},
+				panelAt,
+			);
 		},
 		[currentSlide, isLandscape],
 	);
@@ -221,9 +313,14 @@ export default function App() {
 
 	return (
 		<div className="viewport">
-			<div ref={sliderRef} className="slider">
+			<div className="slider">
 				{/* Section 1 — Hero */}
-				<section className="slide slide-hero">
+				<section
+					ref={(el) => {
+						slideRefs.current[0] = el;
+					}}
+					className="slide slide-hero"
+				>
 					{/* Single canvas: bg + text overlay in one render pass */}
 					<HeroSilk />
 
@@ -286,7 +383,12 @@ export default function App() {
 							className="social-icon-link social-icon-link--gitlab"
 							aria-label="GitLab"
 						>
-							<svg className="social-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+							<svg
+								className="social-icon"
+								viewBox="0 0 24 24"
+								xmlns="http://www.w3.org/2000/svg"
+								aria-hidden="true"
+							>
 								<path d="M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 0 1-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 0 1 4.82 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.49h8.1l2.44-7.51A.42.42 0 0 1 18.6 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.51L23 13.45a.84.84 0 0 1-.35.94z" />
 							</svg>
 						</a>
@@ -297,7 +399,12 @@ export default function App() {
 							className="social-icon-link social-icon-link--linkedin"
 							aria-label="LinkedIn"
 						>
-							<svg className="social-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+							<svg
+								className="social-icon"
+								viewBox="0 0 24 24"
+								xmlns="http://www.w3.org/2000/svg"
+								aria-hidden="true"
+							>
 								<path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
 							</svg>
 						</a>
@@ -306,11 +413,20 @@ export default function App() {
 					<SpotifyWidget />
 					<h1 className="sr-only">Simone Wang</h1>
 
-					<ScrollHint isLandscape={isLandscape} direction="next" onClick={() => goTo(1)} />
+					<ScrollHint
+						isLandscape={isLandscape}
+						direction="next"
+						onClick={() => goTo(1)}
+					/>
 				</section>
 
 				{/* Section 2 — Timeline */}
-				<section className="slide slide-timeline">
+				<section
+					ref={(el) => {
+						slideRefs.current[1] = el;
+					}}
+					className="slide slide-timeline"
+				>
 					<div className="timeline-wrapper">
 						<div className="timeline-header">
 							<span className="section-index">02</span>
@@ -344,12 +460,25 @@ export default function App() {
 						</div>
 					</div>
 
-					<ScrollHint isLandscape={isLandscape} direction="prev" onClick={() => goTo(0)} />
-					<ScrollHint isLandscape={isLandscape} direction="next" onClick={() => goTo(2)} />
+					<ScrollHint
+						isLandscape={isLandscape}
+						direction="prev"
+						onClick={() => goTo(0)}
+					/>
+					<ScrollHint
+						isLandscape={isLandscape}
+						direction="next"
+						onClick={() => goTo(2)}
+					/>
 				</section>
 
 				{/* Section 3 — Projects */}
-				<section className="slide slide-projects" style={{ position: "relative" }}>
+				<section
+					ref={(el) => {
+						slideRefs.current[2] = el;
+					}}
+					className="slide slide-projects"
+				>
 					<div className="projects-left">
 						<span className="section-index">03</span>
 						<h2 className="section-title">Projects</h2>
@@ -384,8 +513,26 @@ export default function App() {
 							))}
 						</CardSwap>
 					</div>
-					<ScrollHint isLandscape={isLandscape} direction="prev" onClick={() => goTo(1)} />
+					<ScrollHint
+						isLandscape={isLandscape}
+						direction="prev"
+						onClick={() => goTo(1)}
+					/>
 				</section>
+			</div>
+
+			{/* Staggered transition overlay */}
+			<div className="transition-overlay" aria-hidden="true">
+				{STRIP_COLORS.map((color, i) => (
+					<div
+						key={i}
+						ref={(el) => {
+							stripRefs.current[i] = el;
+						}}
+						className="transition-strip"
+						style={{ background: color }}
+					/>
+				))}
 			</div>
 
 			{/* Nav dots */}
