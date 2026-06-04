@@ -338,8 +338,22 @@
 
 .transition-strip {
 	position: absolute;
-	inset: 0;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	width: 65%;
 	will-change: transform;
+}
+
+/* Portrait: slides move vertically, so strips become full-width / reduced-height
+   bands anchored at the top instead of narrow columns. */
+@media (orientation: portrait) {
+	.transition-strip {
+		right: 0;
+		bottom: auto;
+		width: auto;
+		height: 65%;
+	}
 }
 
 /* ── Nav dots ─────────────────────────────────────────── */

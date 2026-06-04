@@ -13,7 +13,7 @@ import TextType from "./components/TextType";
 import "./App.css";
 
 const TOTAL_SLIDES = 3;
-const STRIP_COLORS = ["#006895", "#004A6B"];
+const STRIP_COLORS = ["#9CA3AF", "#006895", "#004A6B"];
 
 const timelineItems = [
 	{
@@ -113,7 +113,7 @@ export default function App() {
 
 	// Initialise strips and slides off-screen before first paint
 	useLayoutEffect(() => {
-		gsap.set(stripRefs.current, { xPercent: 110 });
+		gsap.set(stripRefs.current, { x: "100vw" });
 		slideRefs.current.forEach((el, i) => {
 			if (i === 0) {
 				gsap.set(el, { xPercent: 0, yPercent: 0, zIndex: 1 });
@@ -176,6 +176,14 @@ export default function App() {
 
 			const fromXPercent = landscape ? direction * 110 : 0;
 			const fromYPercent = landscape ? 0 : direction * 110;
+			const stripFromX = landscape ? `${direction * 100}vw` : 0;
+			const stripFromY = landscape ? 0 : `${direction * 100}vh`;
+			// Strips cover 65% of the scroll axis (width in landscape, height in
+			// portrait). Going "next" they rest at the start edge (0); going
+			// "previous" they rest at the far edge (100 - 65 = 35) so the wipe
+			// sweeps the full extent symmetrically in both directions.
+			const stripToX = landscape && direction < 0 ? "35vw" : 0;
+			const stripToY = !landscape && direction < 0 ? "35vh" : 0;
 
 			// New section comes in on top (z-index 10), strips at z-index 5 via overlay
 			gsap.set(newSlide, {
@@ -185,8 +193,8 @@ export default function App() {
 			});
 			gsap.set(oldSlide, { zIndex: 0 });
 			gsap.set(strips, {
-				xPercent: fromXPercent,
-				yPercent: fromYPercent,
+				x: stripFromX,
+				y: stripFromY,
 			});
 
 			// ReactBits staggered-menu timing: strips stagger at 0.07s, panel follows at lastStrip+0.08s
@@ -208,8 +216,8 @@ export default function App() {
 					gsap.set(newSlide, { zIndex: 1 });
 					// Strips hidden behind new slide — reset off-screen silently
 					gsap.set(strips, {
-						xPercent: fromXPercent,
-						yPercent: fromYPercent,
+						x: stripFromX,
+						y: stripFromY,
 					});
 					if (index === 1 && !timelineAnimated.current) {
 						timelineAnimated.current = true;
@@ -232,10 +240,10 @@ export default function App() {
 			strips.forEach((strip, i) => {
 				tl.fromTo(
 					strip,
-					{ xPercent: fromXPercent, yPercent: fromYPercent },
+					{ x: stripFromX, y: stripFromY },
 					{
-						xPercent: 0,
-						yPercent: 0,
+						x: stripToX,
+						y: stripToY,
 						duration: STRIP_DUR,
 						ease: "power4.out",
 					},
