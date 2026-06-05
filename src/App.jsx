@@ -10,36 +10,33 @@ import HeroSilk from "./components/HeroSilk";
 import CardSwap, { Card } from "./components/CardSwap";
 import SpotifyWidget from "./components/SpotifyWidget";
 import TextType from "./components/TextType";
+import SplitText from "./components/SplitText";
 import "./App.css";
 
 const TOTAL_SLIDES = 3;
+const VISIBLE = 3;
 const STRIP_COLORS = ["#9CA3AF", "#006895", "#004A6B"];
 
 const timelineItems = [
 	{
-		year: "2024",
-		title: "Senior Developer",
-		desc: "Led frontend architecture for a SaaS platform serving 50k+ users.",
+		year: "Set 2026 - Now",
+		title: "NYU Tandon School of Engineering",
+		desc: "Master of Science in Computer Science - Incoming Fall 2026",
 	},
 	{
-		year: "2023",
-		title: "Full-Stack Engineer",
-		desc: "Built real-time collaboration features with WebSockets and React.",
+		year: "Nov 2022 - May 2026",
+		title: "Bonobo Srl",
+		desc: "Grew from junior to senior developer, building full-stack apps with React, Laravel, Angular & AWS while managing client relationships end-to-end.",
 	},
 	{
-		year: "2022",
-		title: "UI Engineer",
-		desc: "Designed and shipped a design system adopted across 5 product teams.",
+		year: "Sep 2021 - Oct 2024",
+		title: "University of Modena and Reggio Emilia",
+		desc: "BSc in Computer Science - Graduated 104/110",
 	},
 	{
-		year: "2021",
-		title: "Software Engineer",
-		desc: "Developed REST APIs and mobile-first responsive interfaces.",
-	},
-	{
-		year: "2020",
-		title: "Graduate & First Role",
-		desc: "Computer Science degree. Joined a startup as a founding engineer.",
+		year: "9 Apr 2002",
+		title: "Spawn Point",
+		desc: "Born in Mirandola, raised in Carpi (Modena, Italy)",
 	},
 ];
 
@@ -97,11 +94,13 @@ export default function App() {
 	const [isLandscape, setIsLandscape] = useState(
 		() => window.matchMedia("(orientation: landscape)").matches,
 	);
+	const [winStart, setWinStart] = useState(0);
 	const slideRefs = useRef([]);
 	const stripRefs = useRef([]);
 	const isAnimating = useRef(false);
-	const timelineItemsRef = useRef([]);
-	const timelineAnimated = useRef(false);
+	// Event texts split-animate in once Section 2 has been reached; the timeline
+	// rail/cards themselves stay static (no entrance animation).
+	const [timelinePlay, setTimelinePlay] = useState(false);
 	const heroTextRef = useRef(null);
 
 	useEffect(() => {
@@ -219,20 +218,8 @@ export default function App() {
 						x: stripFromX,
 						y: stripFromY,
 					});
-					if (index === 1 && !timelineAnimated.current) {
-						timelineAnimated.current = true;
-						gsap.fromTo(
-							timelineItemsRef.current,
-							{ opacity: 0, y: 40 },
-							{
-								opacity: 1,
-								y: 0,
-								duration: 0.7,
-								ease: "power3.out",
-								stagger: 0.12,
-							},
-						);
-					}
+					// Trigger the split-text reveal of the event copy on arrival.
+					if (index === 1) setTimelinePlay(true);
 				},
 			});
 
@@ -318,6 +305,13 @@ export default function App() {
 			window.removeEventListener("touchend", onTouchEnd);
 		};
 	}, [currentSlide, goTo, isLandscape]);
+
+	// timelineItems are ordered newest → oldest. The vertical window shows
+	// `VISIBLE` items top→bottom as newest→oldest (newest pinned to the top).
+	const maxStart = Math.max(0, timelineItems.length - VISIBLE);
+	const hasOlder = winStart < maxStart;
+	const hasNewer = winStart > 0;
+	const visibleItems = timelineItems.slice(winStart, winStart + VISIBLE);
 
 	return (
 		<div className="viewport">
@@ -435,36 +429,126 @@ export default function App() {
 					}}
 					className="slide slide-timeline"
 				>
-					<div className="timeline-wrapper">
-						<div className="timeline-header">
-							<span className="section-index">02</span>
-							<h2 className="section-title">Experience</h2>
-						</div>
-						<div className="timeline">
-							<div className="timeline-line" />
-							{timelineItems.map((item, i) => (
-								<div
-									key={i}
-									className="timeline-item"
-									ref={(el) => {
-										timelineItemsRef.current[i] = el;
-									}}
-									style={{ opacity: 0 }}
-								>
-									<div className="timeline-year">
-										{item.year}
-									</div>
-									<div className="timeline-dot" />
-									<div className="timeline-content">
-										<h3 className="timeline-item-title">
-											{item.title}
-										</h3>
-										<p className="timeline-item-desc">
-											{item.desc}
-										</p>
-									</div>
-								</div>
-							))}
+					<div className="exp-wrap">
+						<header className="exp-head">
+							<span className="exp-overline">Career</span>
+							<h2 className="exp-title">Experiences</h2>
+						</header>
+
+						<div className="exp-timeline">
+							<div className="exp-rail">
+								{/* Top: "now" dashed tail, or a control to step
+								    back toward more recent events */}
+								{hasNewer ? (
+									<button
+										type="button"
+										className="exp-nav exp-nav--newer"
+										onClick={() =>
+											setWinStart((s) =>
+												Math.max(0, s - 1),
+											)
+										}
+										aria-label="Show more recent experiences"
+									>
+										<span className="exp-nav-label">
+											Recent
+										</span>
+										<svg
+											className="exp-nav-arrow"
+											viewBox="0 0 16 44"
+											fill="none"
+											stroke="currentColor"
+											strokeWidth="1.5"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+										>
+											<line
+												x1="8"
+												y1="44"
+												x2="8"
+												y2="6"
+											/>
+											<polyline points="2,14 8,5 14,14" />
+										</svg>
+									</button>
+								) : (
+									<span
+										className="exp-now"
+										aria-hidden="true"
+									/>
+								)}
+
+								{/* The visible events, newest at the top */}
+								{visibleItems.map((item, i) => {
+									const base = i * 0.07;
+									return (
+										<div key={i} className="exp-node">
+											<div className="exp-card">
+												<SplitText
+													as="span"
+													className="exp-year"
+													text={item.year}
+													play={timelinePlay}
+													replayKey={winStart}
+													startDelay={base}
+												/>
+												<SplitText
+													as="h3"
+													className="exp-item-title"
+													text={item.title}
+													play={timelinePlay}
+													replayKey={winStart}
+													startDelay={base + 0.05}
+												/>
+												<SplitText
+													as="p"
+													className="exp-item-desc"
+													text={item.desc}
+													play={timelinePlay}
+													replayKey={winStart}
+													startDelay={base + 0.1}
+												/>
+											</div>
+											<span className="exp-dot" />
+										</div>
+									);
+								})}
+
+								{/* Bottom: step toward older events */}
+								{hasOlder && (
+									<button
+										type="button"
+										className="exp-nav exp-nav--older"
+										onClick={() =>
+											setWinStart((s) =>
+												Math.min(maxStart, s + 1),
+											)
+										}
+										aria-label="Show older experiences"
+									>
+										<svg
+											className="exp-nav-arrow"
+											viewBox="0 0 16 44"
+											fill="none"
+											stroke="currentColor"
+											strokeWidth="1.5"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+										>
+											<line
+												x1="8"
+												y1="0"
+												x2="8"
+												y2="38"
+											/>
+											<polyline points="2,30 8,39 14,30" />
+										</svg>
+										<span className="exp-nav-label">
+											Older
+										</span>
+									</button>
+								)}
+							</div>
 						</div>
 					</div>
 
