@@ -22,23 +22,105 @@ const timelineItems = [
 		year: "Set 2026 - Now",
 		title: "NYU Tandon School of Engineering",
 		desc: "Master of Science in Computer Science - Incoming Fall 2026",
+		images: [],
 	},
 	{
 		year: "Nov 2022 - May 2026",
 		title: "Bonobo Srl",
 		desc: "Grew from junior to senior developer, building full-stack apps with React, Laravel, Angular & AWS while managing client relationships end-to-end.",
+		images: [
+			"/images/timeline/bonobo/bonobo_1.jpeg",
+			"/images/timeline/bonobo/bonobo_2.jpeg",
+			"/images/timeline/bonobo/bonobo_3.jpeg",
+		],
 	},
 	{
 		year: "Sep 2021 - Oct 2024",
 		title: "University of Modena and Reggio Emilia",
 		desc: "BSc in Computer Science - Graduated 104/110",
+		images: [
+			"/images/timeline/unimore/laurea.jpeg",
+			"/images/timeline/unimore/laurea_2.jpeg",
+		],
 	},
 	{
 		year: "9 Apr 2002",
 		title: "Spawn Point",
 		desc: "Born in Mirandola, raised in Carpi (Modena, Italy)",
+		images: ["/images/timeline/spawn_point/wanghino.jpeg"],
 	},
 ];
+
+function seededRand(seed) {
+	const x = Math.sin(seed + 1) * 10000;
+	return x - Math.floor(x);
+}
+
+// Compute photo positions for the current viewport.
+// Non-overlap guaranteed: each photo occupies an exclusive y-band.
+// x positions are evenly distributed across the available width so photos
+// never cluster at one side.
+function computePhotoPositions() {
+	const vw = window.innerWidth;
+	const vh = window.innerHeight;
+
+	// Photo size matches CSS: clamp(90px, 9vw, 115px)
+	const photoW = Math.min(115, Math.max(90, 0.09 * vw));
+	const photoH = photoW + 19; // 7px top + (photoW-14)px square img + 26px bottom
+
+	// Bottom of the "EXPERIENCES" title.
+	// Slide padding: 4vh top / 6vw left. Title font-size: clamp(2.4rem,6vw,4.5rem).
+	const titleFontPx = Math.min(72, Math.max(38.4, 0.06 * vw));
+	// Right edge of title text (estimated): slide-pad-left + text-width + gap
+	const titleRight = 0.06 * vw + titleFontPx * 4.6 + 20;
+	// Bottom edge of title + breathing room
+	const titleBottom = 0.04 * vh + 20 + titleFontPx * 0.95 + 40;
+
+	// Available rectangle (px).
+	// X starts AFTER the title text so photos are never in the same visual column.
+	const railX  = 0.85 * vw;
+	const cardW  = Math.min(460, 0.60 * vw);
+	const areaX1 = Math.max(titleRight, 16);
+	const areaX2 = railX - 26 - cardW - photoW - 20;
+	const areaY1 = Math.max(titleBottom, 16);
+	const areaY2 = vh - photoH - 16;
+
+	return timelineItems.map((item, ei) => {
+		const n = item.images.length;
+		if (n === 0) return [];
+
+		const xRange = Math.max(0, areaX2 - areaX1);
+		const areaH  = Math.max(0, areaY2 - areaY1);
+		const bandH  = areaH / n;
+
+		return item.images.map((_, pi) => {
+			const s = ei * 17 + pi * 11;
+
+			// Exclusive y-band — photos in different bands NEVER overlap in 2-D
+			const yTop = areaY1 + pi * bandH;
+			const yBot = yTop + Math.max(0, bandH - photoH);
+			const y    = yTop + seededRand(s * 2.7) * (yBot - yTop);
+
+			// Distribute x evenly across available width (not left-biased).
+			// Each photo gets an equal x-slot; jitter ±35% within that slot.
+			const slotW  = xRange / n;
+			const slotCx = areaX1 + (pi + 0.5) * slotW; // slot centre
+			const jitter = slotW * 0.35;
+			const x = Math.max(areaX1,
+				Math.min(areaX2,
+					slotCx + (seededRand(s * 1.3) - 0.5) * 2 * jitter));
+
+			const rotation = -16 + seededRand(s * 3.9) * 32;
+
+			return {
+				x: (x / vw) * 100,  // % of slide width  → CSS left %
+				y: (y / vh) * 100,  // % of slide height → CSS top  %
+				rotation,
+				delay: pi * 0.08,
+			};
+		});
+	});
+}
 
 const projectCards = [
 	{ title: "Project One", sub: "React · Node.js · PostgreSQL" },
@@ -95,6 +177,11 @@ export default function App() {
 		() => window.matchMedia("(orientation: landscape)").matches,
 	);
 	const [winStart, setWinStart] = useState(0);
+	const [photoPositions, setPhotoPositions] = useState(computePhotoPositions);
+	const [hoveredEvent, setHoveredEvent] = useState(null);
+	// Default to first item with images (Bonobo = index 1)
+	const [selectedEvent, setSelectedEvent] = useState(1);
+	const activeEvent = hoveredEvent ?? selectedEvent;
 	const slideRefs = useRef([]);
 	const stripRefs = useRef([]);
 	const isAnimating = useRef(false);
@@ -306,10 +393,25 @@ export default function App() {
 		};
 	}, [currentSlide, goTo, isLandscape]);
 
-	// timelineItems are ordered newest → oldest. The vertical window shows
-	// `VISIBLE` items top→bottom as newest→oldest (newest pinned to the top).
-	const maxStart = Math.max(0, timelineItems.length - VISIBLE);
-	const hasOlder = winStart < maxStart;
+	useEffect(() => {
+		const onResize = () => setPhotoPositions(computePhotoPositions());
+		window.addEventListener("resize", onResize);
+		return () => window.removeEventListener("resize", onResize);
+	}, []);
+
+	// When navigating the timeline window, select the first visible item with images.
+	useEffect(() => {
+		for (let i = winStart; i < winStart + VISIBLE; i++) {
+			if (timelineItems[i]?.images.length > 0) {
+				setSelectedEvent(i);
+				break;
+			}
+		}
+	}, [winStart]);
+
+	// timelineItems are ordered newest → oldest. Navigation jumps by VISIBLE
+	// so pages never overlap.
+	const hasOlder = winStart + VISIBLE < timelineItems.length;
 	const hasNewer = winStart > 0;
 	const visibleItems = timelineItems.slice(winStart, winStart + VISIBLE);
 
@@ -429,6 +531,30 @@ export default function App() {
 					}}
 					className="slide slide-timeline"
 				>
+					{/* Scattered polaroids — positioned at slide level */}
+					<div className="exp-photos-scatter" aria-hidden="true">
+						{timelineItems.map((item, ei) =>
+							item.images.map((src, pi) => {
+								const pos = photoPositions[ei][pi];
+								const isVisible = activeEvent === ei;
+								return (
+									<div
+										key={`photo-${ei}-${pi}`}
+										className={`exp-polaroid${isVisible ? " exp-polaroid--visible" : ""}`}
+										style={{
+											left: `${pos.x}%`,
+											top: `${pos.y}%`,
+											"--rotation": `${pos.rotation}deg`,
+											"--delay": `${pos.delay}s`,
+										}}
+									>
+										<img src={src} alt="" draggable="false" />
+									</div>
+								);
+							})
+						)}
+					</div>
+
 					<div className="exp-wrap">
 						<header className="exp-head">
 							<span className="exp-overline">Career</span>
@@ -445,7 +571,7 @@ export default function App() {
 										className="exp-nav exp-nav--newer"
 										onClick={() =>
 											setWinStart((s) =>
-												Math.max(0, s - 1),
+												Math.max(0, s - VISIBLE),
 											)
 										}
 										aria-label="Show more recent experiences"
@@ -481,9 +607,19 @@ export default function App() {
 								{/* The visible events, newest at the top */}
 								{visibleItems.map((item, i) => {
 									const base = i * 0.07;
+									const isLast = i === visibleItems.length - 1 && !hasOlder;
+									const globalIdx = winStart + i;
+									const isActive = activeEvent === globalIdx;
 									return (
-										<div key={i} className="exp-node">
-											<div className="exp-card">
+										<div
+											key={item.title}
+											className={`exp-node${isLast ? " exp-node--last" : ""} ${isActive ? "exp-node--active" : "exp-node--dimmed"}`}
+										>
+											<div
+												className="exp-card"
+												onMouseEnter={() => { setHoveredEvent(globalIdx); setSelectedEvent(globalIdx); }}
+												onMouseLeave={() => setHoveredEvent(null)}
+											>
 												<SplitText
 													as="span"
 													className="exp-year"
@@ -512,7 +648,7 @@ export default function App() {
 											<span className="exp-dot" />
 										</div>
 									);
-								})}
+									})}
 
 								{/* Bottom: step toward older events */}
 								{hasOlder && (
@@ -520,9 +656,7 @@ export default function App() {
 										type="button"
 										className="exp-nav exp-nav--older"
 										onClick={() =>
-											setWinStart((s) =>
-												Math.min(maxStart, s + 1),
-											)
+											setWinStart((s) => s + VISIBLE)
 										}
 										aria-label="Show older experiences"
 									>

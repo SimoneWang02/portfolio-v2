@@ -242,6 +242,14 @@
 	background: rgba(240, 236, 228, 0.32);
 }
 
+.exp-node--last {
+	background: linear-gradient(
+		to bottom,
+		rgba(240, 236, 228, 0.32) 50%,
+		transparent 50%
+	);
+}
+
 .exp-dot {
 	position: absolute;
 	left: 50%;
@@ -254,7 +262,8 @@
 	box-shadow: 0 0 12px rgba(0, 104, 149, 0.6);
 	transition:
 		background 0.3s ease,
-		box-shadow 0.3s ease;
+		box-shadow 0.3s ease,
+		opacity 0.3s ease;
 }
 
 /* Event text sits to the LEFT of the dot, right-aligned toward the line */
@@ -265,11 +274,12 @@
 	transform: translateY(-50%);
 	width: min(460px, 60vw);
 	padding: 14px 20px;
-	border-radius: 14px;
 	text-align: right;
 	transition:
 		background 0.3s ease,
-		transform 0.3s ease;
+		transform 0.3s ease,
+		opacity 0.3s ease;
+	cursor: pointer;
 }
 
 .exp-card:hover {
@@ -367,6 +377,87 @@
 	text-transform: uppercase;
 	color: rgba(240, 236, 228, 0.5);
 	white-space: nowrap;
+}
+
+/* ── Timeline scattered polaroids ───────────────────── */
+
+.exp-photos-scatter {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	z-index: 1;
+}
+
+.exp-polaroid {
+	position: absolute;
+	width: clamp(90px, 9vw, 115px);
+	background: #f5f2ec;
+	padding: 7px 7px 26px;
+	box-sizing: border-box;
+	box-shadow:
+		0 8px 24px rgba(0, 0, 0, 0.65),
+		0 2px 6px rgba(0, 0, 0, 0.4);
+	/* Hidden state */
+	opacity: 0;
+	transform: rotate(var(--rotation)) scale(0.82) translateY(10px);
+	transition:
+		opacity 0.35s ease,
+		transform 0.45s ease;
+	transition-delay: 0s;
+}
+
+.exp-polaroid--visible {
+	opacity: 1;
+	transform: rotate(var(--rotation)) scale(1) translateY(0);
+	/* Stagger only on entry */
+	transition-delay: var(--delay, 0s);
+}
+
+.exp-polaroid img {
+	width: 100%;
+	aspect-ratio: 1;
+	object-fit: cover;
+	display: block;
+}
+
+/* ── Active / dimmed timeline events ────────────────── */
+
+.exp-node {
+	transition: opacity 0.3s ease;
+}
+
+.exp-node--dimmed .exp-card {
+	opacity: 0.35;
+}
+
+.exp-node--dimmed .exp-dot {
+	opacity: 0.35;
+}
+
+.exp-node--active .exp-card {
+	background: #006895;
+	transform: translateY(-50%) translateX(-4px);
+}
+
+.exp-node--active .exp-year {
+	color: rgba(255, 255, 255, 0.8);
+}
+
+.exp-node--active .exp-item-title {
+	color: #fff;
+}
+
+.exp-node--active .exp-item-desc {
+	color: rgba(255, 255, 255, 0.78);
+}
+
+.exp-node--active .exp-dot {
+	background: #fff;
+	box-shadow: 0 0 14px rgba(255, 255, 255, 0.65);
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+	.exp-photos-scatter { display: none; }
 }
 
 /* ── Section 3 — Projects ─────────────────────────────── */
@@ -579,6 +670,10 @@
 /* ── Portrait orientation ─────────────────────────────── */
 
 @media (orientation: portrait) {
+	.exp-photos-scatter {
+		display: none;
+	}
+
 	.slide-timeline {
 		padding: 8vh 5vw;
 	}
@@ -592,7 +687,8 @@
 	}
 
 	.exp-card {
-		width: min(360px, 66vw);
+		width: fit-content;
+		max-width: min(360px, 66vw);
 		padding: 10px 12px;
 	}
 
