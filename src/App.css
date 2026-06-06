@@ -390,7 +390,7 @@
 
 .exp-polaroid {
 	position: absolute;
-	width: clamp(90px, 9vw, 115px);
+	width: clamp(120px, 13vw, 200px);
 	background: #f5f2ec;
 	padding: 7px 7px 26px;
 	box-sizing: border-box;

@@ -64,60 +64,98 @@ function computePhotoPositions() {
 	const vw = window.innerWidth;
 	const vh = window.innerHeight;
 
-	// Photo size matches CSS: clamp(90px, 9vw, 115px)
-	const photoW = Math.min(115, Math.max(90, 0.09 * vw));
-	const photoH = photoW + 19; // 7px top + (photoW-14)px square img + 26px bottom
+	// Photo size matches CSS: clamp(120px, 13vw, 200px)
+	const photoW = Math.min(200, Math.max(120, 0.13 * vw));
+	const photoH = photoW + 22;
 
-	// Bottom of the "EXPERIENCES" title.
-	// Slide padding: 4vh top / 6vw left. Title font-size: clamp(2.4rem,6vw,4.5rem).
 	const titleFontPx = Math.min(72, Math.max(38.4, 0.06 * vw));
-	// Right edge of title text (estimated): slide-pad-left + text-width + gap
-	const titleRight = 0.06 * vw + titleFontPx * 4.6 + 20;
-	// Bottom edge of title + breathing room
 	const titleBottom = 0.04 * vh + 20 + titleFontPx * 0.95 + 40;
 
-	// Available rectangle (px).
-	// X starts AFTER the title text so photos are never in the same visual column.
 	const railX  = 0.85 * vw;
 	const cardW  = Math.min(460, 0.60 * vw);
-	const areaX1 = Math.max(titleRight, 16);
-	const areaX2 = railX - 26 - cardW - photoW - 20;
-	const areaY1 = Math.max(titleBottom, 16);
-	const areaY2 = vh - photoH - 16;
+	const slidePad = 0.06 * vw;
+
+	// X: from slide padding to just before the cards begin
+	const areaX1 = slidePad;
+	const areaX2 = Math.max(slidePad + photoW, railX - cardW - 40) - photoW;
+	const areaY1 = Math.max(titleBottom, slidePad);
+	const areaY2 = vh - photoH - 20;
+
+	const areaCx = (areaX1 + areaX2) / 2;
+	const areaCy = (areaY1 + areaY2) / 2;
+
+	// Inter-photo spacing for pattern layouts
+	const sp = photoW * 1.65;
+
+	function getPattern(n) {
+		const h3 = sp * Math.sqrt(3) / 2;
+		switch (n) {
+			case 1: return [[0, 0]];
+			case 2: return [
+				[ sp * 0.12, -sp * 0.5],
+				[-sp * 0.12,  sp * 0.5],
+			];
+			case 3: return [
+				[0,         -(h3 * 2 / 3)],
+				[-sp / 2,    h3 / 3],
+				[ sp / 2,    h3 / 3],
+			];
+			case 4: return [
+				[-sp / 2, -sp / 2],
+				[ sp / 2, -sp / 2],
+				[-sp / 2,  sp / 2],
+				[ sp / 2,  sp / 2],
+			];
+			case 5: return [
+				[-sp / 2, -sp / 2],
+				[ sp / 2, -sp / 2],
+				[0,        0],
+				[-sp / 2,  sp / 2],
+				[ sp / 2,  sp / 2],
+			];
+			default: return null;
+		}
+	}
 
 	return timelineItems.map((item, ei) => {
 		const n = item.images.length;
 		if (n === 0) return [];
 
-		const xRange = Math.max(0, areaX2 - areaX1);
-		const areaH  = Math.max(0, areaY2 - areaY1);
-		const bandH  = areaH / n;
+		const pattern = getPattern(n);
 
-		return item.images.map((_, pi) => {
+		if (!pattern) {
+			// 6+ photos: original scattered algorithm
+			const xRange = Math.max(0, areaX2 - areaX1);
+			const areaH  = Math.max(0, areaY2 - areaY1);
+			const bandH  = areaH / n;
+
+			return item.images.map((_, pi) => {
+				const s = ei * 17 + pi * 11;
+				const yTop = areaY1 + pi * bandH;
+				const yBot = yTop + Math.max(0, bandH - photoH);
+				const y    = yTop + seededRand(s * 2.7) * (yBot - yTop);
+				const slotW  = xRange / n;
+				const slotCx = areaX1 + (pi + 0.5) * slotW;
+				const jitter = slotW * 0.35;
+				const x = Math.max(areaX1,
+					Math.min(areaX2,
+						slotCx + (seededRand(s * 1.3) - 0.5) * 2 * jitter));
+				const rotation = -16 + seededRand(s * 3.9) * 32;
+				return { x: (x / vw) * 100, y: (y / vh) * 100, rotation, delay: pi * 0.08 };
+			});
+		}
+
+		return pattern.map(([dx, dy], pi) => {
 			const s = ei * 17 + pi * 11;
+			const jx = (seededRand(s * 2.1) - 0.5) * photoW * 0.18;
+			const jy = (seededRand(s * 1.7) - 0.5) * photoH * 0.18;
 
-			// Exclusive y-band — photos in different bands NEVER overlap in 2-D
-			const yTop = areaY1 + pi * bandH;
-			const yBot = yTop + Math.max(0, bandH - photoH);
-			const y    = yTop + seededRand(s * 2.7) * (yBot - yTop);
+			const x = Math.max(areaX1, Math.min(areaX2, areaCx + dx + jx));
+			const y = Math.max(areaY1, Math.min(areaY2, areaCy + dy + jy));
 
-			// Distribute x evenly across available width (not left-biased).
-			// Each photo gets an equal x-slot; jitter ±35% within that slot.
-			const slotW  = xRange / n;
-			const slotCx = areaX1 + (pi + 0.5) * slotW; // slot centre
-			const jitter = slotW * 0.35;
-			const x = Math.max(areaX1,
-				Math.min(areaX2,
-					slotCx + (seededRand(s * 1.3) - 0.5) * 2 * jitter));
+			const rotation = -15 + seededRand(s * 3.9) * 30;
 
-			const rotation = -16 + seededRand(s * 3.9) * 32;
-
-			return {
-				x: (x / vw) * 100,  // % of slide width  → CSS left %
-				y: (y / vh) * 100,  // % of slide height → CSS top  %
-				rotation,
-				delay: pi * 0.08,
-			};
+			return { x: (x / vw) * 100, y: (y / vh) * 100, rotation, delay: pi * 0.08 };
 		});
 	});
 }
