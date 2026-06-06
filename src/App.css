@@ -431,7 +431,9 @@
 }
 
 .exp-node--dimmed .exp-dot {
-	opacity: 0.35;
+	background: #082C3C;
+	box-shadow: none;
+	opacity: 1;
 }
 
 .exp-node--active .exp-card {
