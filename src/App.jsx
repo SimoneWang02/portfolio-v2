@@ -555,7 +555,7 @@ export default function App() {
 						)}
 					</div>
 
-					<div className="exp-wrap">
+					<div className="exp-wrap" style={timelinePlay ? undefined : { pointerEvents: "none" }}>
 						<header className="exp-head">
 							<span className="exp-overline">Career</span>
 							<h2 className="exp-title">Experiences</h2>
@@ -609,7 +609,7 @@ export default function App() {
 									const base = i * 0.07;
 									const isLast = i === visibleItems.length - 1 && !hasOlder;
 									const globalIdx = winStart + i;
-									const isActive = activeEvent === globalIdx;
+									const isActive = timelinePlay && activeEvent === globalIdx;
 									return (
 										<div
 											key={item.title}
