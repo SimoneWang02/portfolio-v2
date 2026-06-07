@@ -699,20 +699,20 @@ export default function App() {
 					className="slide slide-timeline"
 				>
 					<Grainient
-						color1="#003e59"
+						color1="#001f2d"
 						color2="#002f43"
-						color3="#001f2d"
-						grainAmount={0.08}
-						grainScale={1.8}
+						color3="#003e59"
+						grainAmount={0.1}
+						grainScale={2}
 						grainAnimated
-						timeSpeed={0.5}
-						warpStrength={0.8}
-						warpFrequency={4.0}
-						warpSpeed={1.2}
-						warpAmplitude={60}
-						contrast={1.4}
-						saturation={0.85}
-						zoom={1.1}
+						timeSpeed={0.25}
+						warpStrength={1}
+						warpFrequency={5.0}
+						warpSpeed={1}
+						warpAmplitude={5}
+						contrast={1.5}
+						saturation={1}
+						zoom={1}
 						className="grainient-slide-bg"
 					/>
 					{/* Scattered polaroids — positioned at slide level */}
@@ -959,20 +959,20 @@ export default function App() {
 					className="slide slide-projects"
 				>
 					<Grainient
-						color1="#003e59"
+						color1="#001f2d"
 						color2="#002f43"
-						color3="#001f2d"
-						grainAmount={0.09}
-						grainScale={2.0}
+						color3="#003e59"
+						grainAmount={0.1}
+						grainScale={2}
 						grainAnimated
-						timeSpeed={0.5}
-						warpStrength={0.9}
-						warpFrequency={3.5}
-						warpSpeed={1.0}
-						warpAmplitude={55}
-						contrast={1.45}
-						saturation={0.8}
-						zoom={1.05}
+						timeSpeed={0.25}
+						warpStrength={1}
+						warpFrequency={5.0}
+						warpSpeed={1}
+						warpAmplitude={5}
+						contrast={1.5}
+						saturation={1}
+						zoom={1}
 						className="grainient-slide-bg"
 					/>
 					<div className="projects-left">
