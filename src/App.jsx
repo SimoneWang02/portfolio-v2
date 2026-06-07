@@ -30,9 +30,9 @@ const timelineItems = [
 		title: "Bonobo Srl",
 		desc: "Grew from junior to senior developer, building full-stack apps with React, Laravel, Angular & AWS while managing client relationships end-to-end.",
 		images: [
-			"/images/timeline/bonobo/bonobo_1.jpeg",
-			"/images/timeline/bonobo/bonobo_2.jpeg",
-			"/images/timeline/bonobo/bonobo_3.jpeg",
+			"/images/timeline/bonobo/bonobo_1.jpg",
+			"/images/timeline/bonobo/bonobo_2.jpg",
+			"/images/timeline/bonobo/bonobo_3.jpg",
 		],
 	},
 	{
@@ -40,15 +40,16 @@ const timelineItems = [
 		title: "University of Modena and Reggio Emilia",
 		desc: "BSc in Computer Science - Graduated 104/110",
 		images: [
-			"/images/timeline/unimore/laurea.jpeg",
-			"/images/timeline/unimore/laurea_2.jpeg",
+			"/images/timeline/unimore/unimore_1.jpg",
+			"/images/timeline/unimore/unimore_2.jpg",
+			"/images/timeline/unimore/unimore_3.jpg",
 		],
 	},
 	{
 		year: "9 Apr 2002",
 		title: "Spawn Point",
 		desc: "Born in Mirandola, raised in Carpi (Modena, Italy)",
-		images: ["/images/timeline/spawn_point/wanghino.jpeg"],
+		images: ["/images/timeline/spawn_point/wanghino.jpg"],
 	},
 ];
 
@@ -72,8 +73,8 @@ function computePhotoPositions() {
 	const titleFontPx = Math.min(72, Math.max(38.4, 0.06 * vw));
 	const titleBottom = 0.04 * vh + 20 + titleFontPx * 0.95 + 40;
 
-	const railX  = 0.85 * vw;
-	const cardW  = Math.min(460, 0.60 * vw);
+	const railX = 0.85 * vw;
+	const cardW = Math.min(460, 0.6 * vw);
 	const slidePad = 0.06 * vw;
 
 	// X: from slide padding to just before the cards begin
@@ -89,32 +90,38 @@ function computePhotoPositions() {
 	const sp = photoW * 1.65;
 
 	function getPattern(n) {
-		const h3 = sp * Math.sqrt(3) / 2;
+		const h3 = (sp * Math.sqrt(3)) / 2;
 		switch (n) {
-			case 1: return [[0, 0]];
-			case 2: return [
-				[ sp * 0.12, -sp * 0.5],
-				[-sp * 0.12,  sp * 0.5],
-			];
-			case 3: return [
-				[0,         -(h3 * 2 / 3)],
-				[-sp / 2,    h3 / 3],
-				[ sp / 2,    h3 / 3],
-			];
-			case 4: return [
-				[-sp / 2, -sp / 2],
-				[ sp / 2, -sp / 2],
-				[-sp / 2,  sp / 2],
-				[ sp / 2,  sp / 2],
-			];
-			case 5: return [
-				[-sp / 2, -sp / 2],
-				[ sp / 2, -sp / 2],
-				[0,        0],
-				[-sp / 2,  sp / 2],
-				[ sp / 2,  sp / 2],
-			];
-			default: return null;
+			case 1:
+				return [[0, 0]];
+			case 2:
+				return [
+					[sp * 0.12, -sp * 0.5],
+					[-sp * 0.12, sp * 0.5],
+				];
+			case 3:
+				return [
+					[0, -((h3 * 2) / 3)],
+					[-sp / 2, h3 / 3],
+					[sp / 2, h3 / 3],
+				];
+			case 4:
+				return [
+					[-sp / 2, -sp / 2],
+					[sp / 2, -sp / 2],
+					[-sp / 2, sp / 2],
+					[sp / 2, sp / 2],
+				];
+			case 5:
+				return [
+					[-sp / 2, -sp / 2],
+					[sp / 2, -sp / 2],
+					[0, 0],
+					[-sp / 2, sp / 2],
+					[sp / 2, sp / 2],
+				];
+			default:
+				return null;
 		}
 	}
 
@@ -127,22 +134,31 @@ function computePhotoPositions() {
 		if (!pattern) {
 			// 6+ photos: original scattered algorithm
 			const xRange = Math.max(0, areaX2 - areaX1);
-			const areaH  = Math.max(0, areaY2 - areaY1);
-			const bandH  = areaH / n;
+			const areaH = Math.max(0, areaY2 - areaY1);
+			const bandH = areaH / n;
 
 			return item.images.map((_, pi) => {
 				const s = ei * 17 + pi * 11;
 				const yTop = areaY1 + pi * bandH;
 				const yBot = yTop + Math.max(0, bandH - photoH);
-				const y    = yTop + seededRand(s * 2.7) * (yBot - yTop);
-				const slotW  = xRange / n;
+				const y = yTop + seededRand(s * 2.7) * (yBot - yTop);
+				const slotW = xRange / n;
 				const slotCx = areaX1 + (pi + 0.5) * slotW;
 				const jitter = slotW * 0.35;
-				const x = Math.max(areaX1,
-					Math.min(areaX2,
-						slotCx + (seededRand(s * 1.3) - 0.5) * 2 * jitter));
+				const x = Math.max(
+					areaX1,
+					Math.min(
+						areaX2,
+						slotCx + (seededRand(s * 1.3) - 0.5) * 2 * jitter,
+					),
+				);
 				const rotation = -16 + seededRand(s * 3.9) * 32;
-				return { x: (x / vw) * 100, y: (y / vh) * 100, rotation, delay: pi * 0.08 };
+				return {
+					x: (x / vw) * 100,
+					y: (y / vh) * 100,
+					rotation,
+					delay: pi * 0.08,
+				};
 			});
 		}
 
@@ -156,7 +172,12 @@ function computePhotoPositions() {
 
 			const rotation = -15 + seededRand(s * 3.9) * 30;
 
-			return { x: (x / vw) * 100, y: (y / vh) * 100, rotation, delay: pi * 0.08 };
+			return {
+				x: (x / vw) * 100,
+				y: (y / vh) * 100,
+				rotation,
+				delay: pi * 0.08,
+			};
 		});
 	});
 }
@@ -211,7 +232,14 @@ function ScrollHint({ isLandscape, direction = "next", onClick }) {
 
 // center: visual center in viewport coords, derived from CSS position (hover-transform-free)
 // cssWidth/cssHeight: offsetWidth/offsetHeight — actual layout dimensions, not the rotated AABB
-function PolaroidLightbox({ src, rotation, center, cssWidth, cssHeight, onClose }) {
+function PolaroidLightbox({
+	src,
+	rotation,
+	center,
+	cssWidth,
+	cssHeight,
+	onClose,
+}) {
 	const [phase, setPhase] = useState("enter");
 
 	useEffect(() => {
@@ -663,7 +691,8 @@ export default function App() {
 								const pos = photoPositions[ei][pi];
 								const isVisible = activeEvent === ei;
 								const photoKey = `${ei}-${pi}`;
-								const isOriginHidden = hiddenPhotoKey === photoKey;
+								const isOriginHidden =
+									hiddenPhotoKey === photoKey;
 								const isRevealing = revealingKey === photoKey;
 								return (
 									<div
@@ -674,37 +703,72 @@ export default function App() {
 											top: `${pos.y}%`,
 											"--rotation": `${pos.rotation}deg`,
 											"--delay": `${pos.delay}s`,
-											...(isRevealing ? { transition: "none" } : {}),
+											...(isRevealing
+												? { transition: "none" }
+												: {}),
 										}}
-										onClick={isVisible ? (e) => {
-											const el = e.currentTarget;
-											const parent = el.parentElement;
-											const parentRect = parent.getBoundingClientRect();
-											const cssWidth = el.offsetWidth;
-											const cssHeight = el.offsetHeight;
-											// Derive center from CSS percentage position — not from
-											// getBoundingClientRect which includes hover transforms
-											setLightboxPhoto({
-												src,
-												rotation: pos.rotation,
-												center: {
-													x: parentRect.left + (pos.x / 100) * parentRect.width + cssWidth / 2,
-													y: parentRect.top + (pos.y / 100) * parentRect.height + cssHeight / 2,
-												},
-												cssWidth,
-												cssHeight,
-											});
-											setHiddenPhotoKey(photoKey);
-										} : undefined}
+										onClick={
+											isVisible
+												? (e) => {
+														const el =
+															e.currentTarget;
+														const parent =
+															el.parentElement;
+														const parentRect =
+															parent.getBoundingClientRect();
+														const cssWidth =
+															el.offsetWidth;
+														const cssHeight =
+															el.offsetHeight;
+														// Derive center from CSS percentage position — not from
+														// getBoundingClientRect which includes hover transforms
+														setLightboxPhoto({
+															src,
+															rotation:
+																pos.rotation,
+															center: {
+																x:
+																	parentRect.left +
+																	(pos.x /
+																		100) *
+																		parentRect.width +
+																	cssWidth /
+																		2,
+																y:
+																	parentRect.top +
+																	(pos.y /
+																		100) *
+																		parentRect.height +
+																	cssHeight /
+																		2,
+															},
+															cssWidth,
+															cssHeight,
+														});
+														setHiddenPhotoKey(
+															photoKey,
+														);
+													}
+												: undefined
+										}
 									>
-										<img src={src} alt="" draggable="false" />
+										<img
+											src={src}
+											alt=""
+											draggable="false"
+										/>
 									</div>
 								);
-							})
+							}),
 						)}
 					</div>
 
-					<div className="exp-wrap" style={timelinePlay ? undefined : { pointerEvents: "none" }}>
+					<div
+						className="exp-wrap"
+						style={
+							timelinePlay ? undefined : { pointerEvents: "none" }
+						}
+					>
 						<header className="exp-head">
 							<span className="exp-overline">Career</span>
 							<h2 className="exp-title">Experiences</h2>
@@ -756,9 +820,13 @@ export default function App() {
 								{/* The visible events, newest at the top */}
 								{visibleItems.map((item, i) => {
 									const base = i * 0.07;
-									const isLast = i === visibleItems.length - 1 && !hasOlder;
+									const isLast =
+										i === visibleItems.length - 1 &&
+										!hasOlder;
 									const globalIdx = winStart + i;
-									const isActive = timelinePlay && activeEvent === globalIdx;
+									const isActive =
+										timelinePlay &&
+										activeEvent === globalIdx;
 									return (
 										<div
 											key={item.title}
@@ -766,8 +834,13 @@ export default function App() {
 										>
 											<div
 												className="exp-card"
-												onMouseEnter={() => { setHoveredEvent(globalIdx); setSelectedEvent(globalIdx); }}
-												onMouseLeave={() => setHoveredEvent(null)}
+												onMouseEnter={() => {
+													setHoveredEvent(globalIdx);
+													setSelectedEvent(globalIdx);
+												}}
+												onMouseLeave={() =>
+													setHoveredEvent(null)
+												}
 											>
 												<SplitText
 													as="span"
@@ -797,7 +870,7 @@ export default function App() {
 											<span className="exp-dot" />
 										</div>
 									);
-									})}
+								})}
 
 								{/* Bottom: step toward older events */}
 								{hasOlder && (
