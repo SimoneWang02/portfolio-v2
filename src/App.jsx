@@ -5,6 +5,7 @@ import {
 	useLayoutEffect,
 	useCallback,
 } from "react";
+import { createPortal } from "react-dom";
 import gsap from "gsap";
 import HeroSilk from "./components/HeroSilk";
 import CardSwap, { Card } from "./components/CardSwap";
@@ -208,6 +209,87 @@ function ScrollHint({ isLandscape, direction = "next", onClick }) {
 	);
 }
 
+// center: visual center in viewport coords, derived from CSS position (hover-transform-free)
+// cssWidth/cssHeight: offsetWidth/offsetHeight — actual layout dimensions, not the rotated AABB
+function PolaroidLightbox({ src, rotation, center, cssWidth, cssHeight, onClose }) {
+	const [phase, setPhase] = useState("enter");
+
+	useEffect(() => {
+		const raf1 = requestAnimationFrame(() => {
+			const raf2 = requestAnimationFrame(() => setPhase("open"));
+			return () => cancelAnimationFrame(raf2);
+		});
+		return () => cancelAnimationFrame(raf1);
+	}, []);
+
+	const handleClose = useCallback(() => {
+		setPhase("exit");
+		setTimeout(onClose, 460);
+	}, [onClose]);
+
+	const originLeft = center.x - cssWidth / 2;
+	const originTop = center.y - cssHeight / 2;
+
+	const TARGET_W = Math.min(window.innerWidth * 0.85, 560);
+	// Expanded padding: 14px sides, 14px top, 64px bottom (classic polaroid strip)
+	// Height = 14 + (TARGET_W - 28) + 64 = TARGET_W + 50
+	const TARGET_H = TARGET_W + 50;
+	const finalLeft = (window.innerWidth - TARGET_W) / 2;
+	const finalTop = (window.innerHeight - TARGET_H) / 2;
+
+	const isExpanded = phase === "open";
+
+	const heroStyle = isExpanded
+		? {
+				left: finalLeft,
+				top: finalTop,
+				width: TARGET_W,
+				padding: "14px 14px 64px",
+				transform: "rotate(0deg)",
+				boxShadow: "0 32px 80px rgba(0,0,0,0.85)",
+			}
+		: {
+				left: originLeft,
+				top: originTop,
+				width: cssWidth,
+				padding: "7px 7px 26px",
+				transform: `rotate(${rotation}deg)`,
+				boxShadow: "0 8px 24px rgba(0,0,0,0.65)",
+			};
+
+	return createPortal(
+		<div
+			className={`plb-overlay${isExpanded ? " plb-overlay--open" : ""}`}
+			onClick={handleClose}
+		>
+			<div
+				className="plb-hero"
+				style={heroStyle}
+				onClick={(e) => e.stopPropagation()}
+			>
+				<img src={src} alt="" draggable="false" />
+				<button
+					className={`plb-close${isExpanded ? " plb-close--visible" : ""}`}
+					onClick={handleClose}
+					aria-label="Close photo"
+				>
+					<svg
+						viewBox="0 0 14 14"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="1.8"
+						strokeLinecap="round"
+					>
+						<line x1="1" y1="1" x2="13" y2="13" />
+						<line x1="13" y1="1" x2="1" y2="13" />
+					</svg>
+				</button>
+			</div>
+		</div>,
+		document.body,
+	);
+}
+
 export default function App() {
 	const [currentSlide, setCurrentSlide] = useState(0);
 	const [heroTextBounds, setHeroTextBounds] = useState(null);
@@ -226,6 +308,11 @@ export default function App() {
 	// Event texts split-animate in once Section 2 has been reached; the timeline
 	// rail/cards themselves stay static (no entrance animation).
 	const [timelinePlay, setTimelinePlay] = useState(false);
+	const [lightboxPhoto, setLightboxPhoto] = useState(null);
+	const [hiddenPhotoKey, setHiddenPhotoKey] = useState(null);
+	// One-frame flag: suppresses the transition so the polaroid snaps to full
+	// opacity the moment the hero unmounts (no visible gap or fade-in delay)
+	const [revealingKey, setRevealingKey] = useState(null);
 	const heroTextRef = useRef(null);
 
 	useEffect(() => {
@@ -575,16 +662,40 @@ export default function App() {
 							item.images.map((src, pi) => {
 								const pos = photoPositions[ei][pi];
 								const isVisible = activeEvent === ei;
+								const photoKey = `${ei}-${pi}`;
+								const isOriginHidden = hiddenPhotoKey === photoKey;
+								const isRevealing = revealingKey === photoKey;
 								return (
 									<div
 										key={`photo-${ei}-${pi}`}
-										className={`exp-polaroid${isVisible ? " exp-polaroid--visible" : ""}`}
+										className={`exp-polaroid${isVisible ? " exp-polaroid--visible" : ""}${isOriginHidden ? " exp-polaroid--origin-hidden" : ""}`}
 										style={{
 											left: `${pos.x}%`,
 											top: `${pos.y}%`,
 											"--rotation": `${pos.rotation}deg`,
 											"--delay": `${pos.delay}s`,
+											...(isRevealing ? { transition: "none" } : {}),
 										}}
+										onClick={isVisible ? (e) => {
+											const el = e.currentTarget;
+											const parent = el.parentElement;
+											const parentRect = parent.getBoundingClientRect();
+											const cssWidth = el.offsetWidth;
+											const cssHeight = el.offsetHeight;
+											// Derive center from CSS percentage position — not from
+											// getBoundingClientRect which includes hover transforms
+											setLightboxPhoto({
+												src,
+												rotation: pos.rotation,
+												center: {
+													x: parentRect.left + (pos.x / 100) * parentRect.width + cssWidth / 2,
+													y: parentRect.top + (pos.y / 100) * parentRect.height + cssHeight / 2,
+												},
+												cssWidth,
+												cssHeight,
+											});
+											setHiddenPhotoKey(photoKey);
+										} : undefined}
 									>
 										<img src={src} alt="" draggable="false" />
 									</div>
@@ -810,6 +921,24 @@ export default function App() {
 					/>
 				))}
 			</nav>
+
+			{lightboxPhoto && (
+				<PolaroidLightbox
+					src={lightboxPhoto.src}
+					rotation={lightboxPhoto.rotation}
+					center={lightboxPhoto.center}
+					cssWidth={lightboxPhoto.cssWidth}
+					cssHeight={lightboxPhoto.cssHeight}
+					onClose={() => {
+						// Batch: snap the original to full opacity (transition: none for 1 frame)
+						// and unmount the hero in the same render pass — no gap, no double-visible
+						setRevealingKey(hiddenPhotoKey);
+						setHiddenPhotoKey(null);
+						setLightboxPhoto(null);
+						requestAnimationFrame(() => setRevealingKey(null));
+					}}
+				/>
+			)}
 		</div>
 	);
 }

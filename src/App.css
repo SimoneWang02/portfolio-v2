@@ -411,6 +411,20 @@
 	transform: rotate(var(--rotation)) scale(1) translateY(0);
 	/* Stagger only on entry */
 	transition-delay: var(--delay, 0s);
+	cursor: pointer;
+	pointer-events: auto;
+}
+
+.exp-polaroid--visible:hover {
+	transform: rotate(var(--rotation)) scale(1.05);
+	transition-delay: 0s;
+	z-index: 10;
+}
+
+.exp-polaroid--origin-hidden {
+	opacity: 0 !important;
+	pointer-events: none !important;
+	transition: opacity 0s !important;
 }
 
 .exp-polaroid img {
@@ -418,6 +432,82 @@
 	aspect-ratio: 1;
 	object-fit: cover;
 	display: block;
+}
+
+/* ── Polaroid lightbox ───────────────────────────────── */
+
+.plb-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 9000;
+	background: transparent;
+	backdrop-filter: blur(0px);
+	transition:
+		background 0.45s ease,
+		backdrop-filter 0.45s ease;
+}
+
+.plb-overlay--open {
+	background: rgba(0, 0, 0, 0.72);
+	backdrop-filter: blur(6px);
+}
+
+.plb-hero {
+	position: fixed;
+	background: #f5f2ec;
+	box-sizing: border-box;
+	transition:
+		left 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+		top 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+		width 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+		padding 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+		transform 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+		box-shadow 0.45s ease;
+	will-change: left, top, width, transform;
+}
+
+.plb-hero img {
+	width: 100%;
+	aspect-ratio: 1;
+	object-fit: cover;
+	display: block;
+}
+
+.plb-close {
+	position: absolute;
+	top: -14px;
+	right: -14px;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	background: #f5f2ec;
+	border: 1.5px solid rgba(0, 0, 0, 0.12);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	opacity: 0;
+	transform: scale(0.6);
+	transition:
+		opacity 0.2s ease 0.25s,
+		transform 0.2s ease 0.25s,
+		background 0.15s ease;
+}
+
+.plb-close svg {
+	width: 12px;
+	height: 12px;
+	stroke: #333;
+}
+
+.plb-close--visible {
+	opacity: 1;
+	transform: scale(1);
+}
+
+.plb-close:hover {
+	background: #fff;
 }
 
 /* ── Active / dimmed timeline events ────────────────── */
