@@ -8,6 +8,7 @@ import {
 import { createPortal } from "react-dom";
 import gsap from "gsap";
 import HeroSilk from "./components/HeroSilk";
+import Grainient from "./components/Grainient";
 import CardSwap, { Card } from "./components/CardSwap";
 import SpotifyWidget from "./components/SpotifyWidget";
 import TextType from "./components/TextType";
@@ -684,6 +685,23 @@ export default function App() {
 					}}
 					className="slide slide-timeline"
 				>
+					<Grainient
+						color1="#003e59"
+						color2="#002f43"
+						color3="#001f2d"
+						grainAmount={0.08}
+						grainScale={1.8}
+						grainAnimated
+						timeSpeed={0.5}
+						warpStrength={0.8}
+						warpFrequency={4.0}
+						warpSpeed={1.2}
+						warpAmplitude={60}
+						contrast={1.4}
+						saturation={0.85}
+						zoom={1.1}
+						className="grainient-slide-bg"
+					/>
 					{/* Scattered polaroids — positioned at slide level */}
 					<div className="exp-photos-scatter" aria-hidden="true">
 						{timelineItems.map((item, ei) =>
@@ -927,6 +945,23 @@ export default function App() {
 					}}
 					className="slide slide-projects"
 				>
+					<Grainient
+						color1="#003e59"
+						color2="#002f43"
+						color3="#001f2d"
+						grainAmount={0.09}
+						grainScale={2.0}
+						grainAnimated
+						timeSpeed={0.5}
+						warpStrength={0.9}
+						warpFrequency={3.5}
+						warpSpeed={1.0}
+						warpAmplitude={55}
+						contrast={1.45}
+						saturation={0.8}
+						zoom={1.05}
+						className="grainient-slide-bg"
+					/>
 					<div className="projects-left">
 						<span className="section-index">03</span>
 						<h2 className="section-title">Projects</h2>
