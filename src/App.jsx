@@ -128,7 +128,18 @@ function computePhotoPositions() {
 
 	return timelineItems.map((item, ei) => {
 		const n = item.images.length;
-		if (n === 0) return [];
+		if (n === 0) {
+			const s = ei * 17;
+			const rotation = -15 + seededRand(s * 3.9) * 30;
+			return [
+				{
+					x: (Math.max(areaX1, Math.min(areaX2, areaCx)) / vw) * 100,
+					y: (Math.max(areaY1, Math.min(areaY2, areaCy)) / vh) * 100,
+					rotation,
+					delay: 0,
+				},
+			];
+		}
 
 		const pattern = getPattern(n);
 
@@ -717,10 +728,28 @@ export default function App() {
 					/>
 					{/* Scattered polaroids — positioned at slide level */}
 					<div className="exp-photos-scatter" aria-hidden="true">
-						{timelineItems.map((item, ei) =>
-							item.images.map((src, pi) => {
+						{timelineItems.map((item, ei) => {
+							const isVisible = activeEvent === ei;
+							if (item.images.length === 0) {
+								const pos = photoPositions[ei]?.[0];
+								if (!pos) return null;
+								return (
+									<div
+										key={`photo-${ei}-placeholder`}
+										className={`exp-polaroid exp-polaroid--placeholder${isVisible ? " exp-polaroid--visible" : ""}`}
+										style={{
+											left: `${pos.x}%`,
+											top: `${pos.y}%`,
+											"--rotation": `${pos.rotation}deg`,
+											"--delay": "0s",
+										}}
+									>
+										<div className="exp-polaroid-qmark" aria-hidden="true">?</div>
+									</div>
+								);
+							}
+							return item.images.map((src, pi) => {
 								const pos = photoPositions[ei][pi];
-								const isVisible = activeEvent === ei;
 								const photoKey = `${ei}-${pi}`;
 								const isOriginHidden =
 									hiddenPhotoKey === photoKey;
@@ -751,8 +780,6 @@ export default function App() {
 															el.offsetWidth;
 														const cssHeight =
 															el.offsetHeight;
-														// Derive center from CSS percentage position — not from
-														// getBoundingClientRect which includes hover transforms
 														setLightboxPhoto({
 															src,
 															rotation:
@@ -790,8 +817,8 @@ export default function App() {
 										/>
 									</div>
 								);
-							}),
-						)}
+							});
+						})}
 					</div>
 
 					<div

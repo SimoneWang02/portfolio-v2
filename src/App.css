@@ -442,6 +442,29 @@
 	display: block;
 }
 
+.exp-polaroid--placeholder.exp-polaroid--visible {
+	cursor: default;
+}
+
+.exp-polaroid--placeholder.exp-polaroid--visible:hover {
+	transform: rotate(var(--rotation)) scale(1);
+	z-index: auto;
+}
+
+.exp-polaroid-qmark {
+	width: 100%;
+	aspect-ratio: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #e8e3d8;
+	font-size: clamp(28px, 3.5vw, 52px);
+	font-weight: 300;
+	font-family: system-ui, sans-serif;
+	color: #c4bfb7;
+	user-select: none;
+}
+
 /* ── Polaroid lightbox ───────────────────────────────── */
 
 .plb-overlay {
