@@ -79,8 +79,6 @@
 	pointer-events: none;
 }
 
-
-
 .sr-only {
 	position: absolute;
 	width: 1px;
@@ -106,7 +104,9 @@
 	justify-content: center;
 	color: rgba(255, 255, 255, 0.8);
 	text-decoration: none;
-	transition: color 0.2s ease, transform 0.2s ease;
+	transition:
+		color 0.2s ease,
+		transform 0.2s ease;
 }
 
 .social-icon-link:hover {
@@ -431,7 +431,7 @@
 }
 
 .exp-node--dimmed .exp-dot {
-	background: #082C3C;
+	background: #082c3c;
 	box-shadow: none;
 	opacity: 1;
 }
@@ -459,7 +459,9 @@
 }
 
 @media (max-width: 900px) and (orientation: landscape) {
-	.exp-photos-scatter { display: none; }
+	.exp-photos-scatter {
+		display: none;
+	}
 }
 
 /* ── Section 3 — Projects ─────────────────────────────── */
@@ -650,23 +652,43 @@
 }
 
 @keyframes bounce-right {
-	0%, 100% { transform: translateY(-50%) translateX(0px); }
-	50%       { transform: translateY(-50%) translateX(8px); }
+	0%,
+	100% {
+		transform: translateY(-50%) translateX(0px);
+	}
+	50% {
+		transform: translateY(-50%) translateX(8px);
+	}
 }
 
 @keyframes bounce-left {
-	0%, 100% { transform: translateY(-50%) translateX(0px); }
-	50%       { transform: translateY(-50%) translateX(-8px); }
+	0%,
+	100% {
+		transform: translateY(-50%) translateX(0px);
+	}
+	50% {
+		transform: translateY(-50%) translateX(-8px);
+	}
 }
 
 @keyframes bounce-down {
-	0%, 100% { transform: translateX(-50%) translateY(0px); }
-	50%       { transform: translateX(-50%) translateY(8px); }
+	0%,
+	100% {
+		transform: translateX(-50%) translateY(0px);
+	}
+	50% {
+		transform: translateX(-50%) translateY(8px);
+	}
 }
 
 @keyframes bounce-up {
-	0%, 100% { transform: translateX(-50%) translateY(0px); }
-	50%       { transform: translateX(-50%) translateY(-8px); }
+	0%,
+	100% {
+		transform: translateX(-50%) translateY(0px);
+	}
+	50% {
+		transform: translateX(-50%) translateY(-8px);
+	}
 }
 
 /* ── Portrait orientation ─────────────────────────────── */
@@ -680,18 +702,37 @@
 		padding: 8vh 5vw;
 	}
 
+	/* Header flows in the column above the timeline (not floating over photos) */
+	.exp-head {
+		position: relative;
+		margin-bottom: 12px;
+	}
+
 	.exp-title {
 		font-size: clamp(2rem, 9vw, 3rem);
 	}
 
+	/* Mirror: rail on the left side */
 	.exp-rail {
-		margin-left: 78%;
+		margin-left: 8%;
 	}
 
+	/* Mirror: cards on the right side of the dot */
 	.exp-card {
-		width: fit-content;
-		max-width: min(360px, 66vw);
+		right: auto;
+		left: 18px;
+		text-align: left;
+		width: min(520px, 72vw);
 		padding: 10px 12px;
+	}
+
+	.exp-card:hover {
+		transform: translateY(-50%) translateX(4px);
+	}
+
+	/* Active card shifts right (mirrored from desktop's left shift) */
+	.exp-node--active .exp-card {
+		transform: translateY(-50%) translateX(4px);
 	}
 
 	.exp-node {
