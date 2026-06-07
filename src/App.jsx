@@ -514,6 +514,19 @@ export default function App() {
 		return () => window.removeEventListener("wheel", onWheel);
 	}, [currentSlide, goTo]);
 
+	// Keyboard arrow navigation
+	useEffect(() => {
+		const onKeyDown = (e) => {
+			if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+				goTo(currentSlide + 1);
+			} else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+				goTo(currentSlide - 1);
+			}
+		};
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, [currentSlide, goTo]);
+
 	// Touch swipe support
 	useEffect(() => {
 		let touchStartX = 0;
