@@ -710,13 +710,12 @@ export default function App() {
 					className="slide slide-timeline"
 				>
 					<Grainient
-						color1="#001f2d"
-						color2="#002f43"
+						color1="#002a3c"
+						color2="#00344b"
 						color3="#003e59"
 						grainAmount={0.1}
 						grainScale={2}
-						grainAnimated
-						timeSpeed={0.25}
+						timeSpeed={1}
 						warpStrength={1}
 						warpFrequency={5.0}
 						warpSpeed={1}
@@ -744,7 +743,12 @@ export default function App() {
 											"--delay": "0s",
 										}}
 									>
-										<div className="exp-polaroid-qmark" aria-hidden="true">?</div>
+										<div
+											className="exp-polaroid-qmark"
+											aria-hidden="true"
+										>
+											?
+										</div>
 									</div>
 								);
 							}
@@ -986,13 +990,12 @@ export default function App() {
 					className="slide slide-projects"
 				>
 					<Grainient
-						color1="#001f2d"
-						color2="#002f43"
+						color1="#002a3c"
+						color2="#00344b"
 						color3="#003e59"
 						grainAmount={0.1}
 						grainScale={2}
-						grainAnimated
-						timeSpeed={0.25}
+						timeSpeed={1}
 						warpStrength={1}
 						warpFrequency={5.0}
 						warpSpeed={1}
