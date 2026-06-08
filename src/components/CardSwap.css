@@ -1,10 +1,11 @@
 .card-swap-container {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  transform: translate(5%, 20%);
-  transform-origin: bottom right;
-  perspective: 900px;
+  bottom: 4vh;
+  left: 4vw;
+  right: auto;
+  transform: none;
+  /* No perspective: diagonal 2D spread, z-depth has no visual shrinkage */
+  perspective: none;
   overflow: visible;
 }
 
@@ -19,16 +20,4 @@
   will-change: transform;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-}
-
-@media (max-width: 768px) {
-  .card-swap-container {
-    transform: scale(0.75) translate(25%, 25%);
-  }
-}
-
-@media (max-width: 480px) {
-  .card-swap-container {
-    transform: scale(0.55) translate(25%, 25%);
-  }
 }

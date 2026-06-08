@@ -204,6 +204,22 @@ const projectCards = [
 	{ title: "Project Seven", sub: "Svelte · Three.js · GLSL" },
 ];
 
+const N_CARDS = projectCards.length;
+
+function computeCardSwapConfig() {
+	const vw = window.innerWidth;
+	const vh = window.innerHeight;
+	const cardWidth = Math.round(Math.min(vw * 0.72, 1400));
+	const cardHeight = Math.round((cardWidth * 9) / 16);
+	// front card: bottom-left at (4vw, 4vh) from screen edges  — matches CSS bottom/left
+	// back  card: top-right  at (4vw, 4vh) from screen edges  — enforced by the spread formula
+	const edgeX = vw * 0.04; // exact, no rounding, so both sides stay symmetric
+	const edgeY = vh * 0.04;
+	const cardDistance = Math.floor((vw - cardWidth - edgeX * 2) / (N_CARDS - 1));
+	const verticalDistance = Math.max(10, Math.floor((vh - cardHeight - edgeY * 2) / (N_CARDS - 1)));
+	return { cardWidth, cardHeight, cardDistance, verticalDistance };
+}
+
 function ScrollHint({ isLandscape, direction = "next", onClick }) {
 	const isNext = direction === "next";
 	let points;
@@ -338,6 +354,7 @@ export default function App() {
 	);
 	const [winStart, setWinStart] = useState(0);
 	const [photoPositions, setPhotoPositions] = useState(computePhotoPositions);
+	const [csConfig, setCsConfig] = useState(computeCardSwapConfig);
 	const [hoveredEvent, setHoveredEvent] = useState(null);
 	// Default to first item with images (Bonobo = index 1)
 	const [selectedEvent, setSelectedEvent] = useState(1);
@@ -572,7 +589,10 @@ export default function App() {
 	}, [currentSlide, goTo, isLandscape]);
 
 	useEffect(() => {
-		const onResize = () => setPhotoPositions(computePhotoPositions());
+		const onResize = () => {
+			setPhotoPositions(computePhotoPositions());
+			setCsConfig(computeCardSwapConfig());
+		};
 		window.addEventListener("resize", onResize);
 		return () => window.removeEventListener("resize", onResize);
 	}, []);
@@ -1005,24 +1025,20 @@ export default function App() {
 						zoom={1}
 						className="grainient-slide-bg"
 					/>
-					<div className="projects-left">
-						<span className="section-index">03</span>
-						<h2 className="section-title">Projects</h2>
-						<p className="projects-desc">
-							A selection of work across product, tooling, and
-							experimentation.
-						</p>
-					</div>
+					<header className="exp-head proj-head">
+						<span className="exp-overline">Work</span>
+						<h2 className="exp-title">Projects</h2>
+					</header>
 					<div className="projects-cards">
 						<CardSwap
-							width={380}
-							height={260}
-							cardDistance={55}
-							verticalDistance={60}
-							delay={4000}
+							width={csConfig.cardWidth}
+							height={csConfig.cardHeight}
+							cardDistance={csConfig.cardDistance}
+							verticalDistance={csConfig.verticalDistance}
+							delay={3000}
 							pauseOnHover
 							easing="elastic"
-							skewAmount={5}
+							skewAmount={0}
 						>
 							{projectCards.map((p, i) => (
 								<Card key={i} customClass="project-card">

@@ -192,7 +192,7 @@
 .exp-overline {
 	display: block;
 	font-family: "Big Shoulders Display", sans-serif;
-	font-size: 0.72rem;
+	font-size: 1rem;
 	font-weight: 600;
 	letter-spacing: 0.32em;
 	text-transform: uppercase;
@@ -587,6 +587,14 @@
 
 /* ── Section 3 — Projects ─────────────────────────────── */
 
+/* Positions the Projects header at the same visual spot as exp-head in section 2.
+   Section 2 uses padding 4vh 6vw on the slide, then exp-head at top:0/left:0
+   inside exp-wrap — so the effective origin is 4vh/6vw from the slide edge. */
+.proj-head {
+	top: 4vh;
+	left: 6vw;
+}
+
 .slide-projects {
 	background: #001f2d;
 
@@ -875,6 +883,13 @@
 
 	.exp-item-desc {
 		font-size: 0.82rem;
+	}
+
+	.proj-head {
+		position: absolute;
+		top: 64px;
+		left: 6vw;
+		margin-bottom: 0;
 	}
 
 	.slide-projects {
