@@ -211,12 +211,10 @@ function computeCardSwapConfig() {
 	const vh = window.innerHeight;
 	const cardWidth = Math.round(Math.min(vw * 0.72, 1400));
 	const cardHeight = Math.round((cardWidth * 9) / 16);
-	// front card: bottom-left at (4vw, 4vh) from screen edges  — matches CSS bottom/left
-	// back  card: top-right  at (4vw, 4vh) from screen edges  — enforced by the spread formula
-	const edgeX = vw * 0.04; // exact, no rounding, so both sides stay symmetric
-	const edgeY = vh * 0.04;
-	const cardDistance = Math.floor((vw - cardWidth - edgeX * 2) / (N_CARDS - 1));
-	const verticalDistance = Math.max(10, Math.floor((vh - cardHeight - edgeY * 2) / (N_CARDS - 1)));
+	// front card: bottom-left at (7vw, 7vh) — matches CSS bottom/left
+	// back  card: top-right  at (4vw, 4vh) — enforced by the spread formula
+	const cardDistance = Math.floor((vw - cardWidth - vw * 0.07 - vw * 0.04) / (N_CARDS - 1));
+	const verticalDistance = Math.max(10, Math.floor((vh - cardHeight - vh * 0.07 * 2) / (N_CARDS - 1)));
 	return { cardWidth, cardHeight, cardDistance, verticalDistance };
 }
 

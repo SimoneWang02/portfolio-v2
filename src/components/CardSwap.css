@@ -1,7 +1,7 @@
 .card-swap-container {
   position: absolute;
-  bottom: 4vh;
-  left: 4vw;
+  bottom: 7vh;
+  left: 7vw;
   right: auto;
   transform: none;
   /* No perspective: diagonal 2D spread, z-depth has no visual shrinkage */
