@@ -9,7 +9,6 @@ import { createPortal } from "react-dom";
 import gsap from "gsap";
 import HeroSilk from "./components/HeroSilk";
 import Grainient from "./components/Grainient";
-import CardSwap, { Card } from "./components/CardSwap";
 import SpotifyWidget from "./components/SpotifyWidget";
 import TextType from "./components/TextType";
 import SplitText from "./components/SplitText";
@@ -195,28 +194,42 @@ function computePhotoPositions() {
 }
 
 const projectCards = [
-	{ title: "Project One", sub: "React · Node.js · PostgreSQL" },
-	{ title: "Project Two", sub: "Next.js · Vercel · Stripe" },
-	{ title: "Project Three", sub: "TypeScript · GraphQL · AWS" },
-	{ title: "Project Four", sub: "React Native · Firebase" },
-	{ title: "Project Five", sub: "Python · FastAPI · Docker" },
-	{ title: "Project Six", sub: "Vue 3 · D3.js · WebSockets" },
-	{ title: "Project Seven", sub: "Svelte · Three.js · GLSL" },
+	{
+		title: "Project One",
+		sub: "React · Node.js · PostgreSQL",
+		desc: "A full-stack web application with real-time data sync, role-based access and a custom design system built from scratch.",
+	},
+	{
+		title: "Project Two",
+		sub: "Next.js · Vercel · Stripe",
+		desc: "E-commerce storefront with server-side rendering, edge caching and a fully integrated checkout flow.",
+	},
+	{
+		title: "Project Three",
+		sub: "TypeScript · GraphQL · AWS",
+		desc: "API platform serving multiple clients from a single typed schema, deployed on serverless infrastructure.",
+	},
+	{
+		title: "Project Four",
+		sub: "React Native · Firebase",
+		desc: "Cross-platform mobile app with offline-first storage, push notifications and social authentication.",
+	},
+	{
+		title: "Project Five",
+		sub: "Python · FastAPI · Docker",
+		desc: "Containerized backend service with async endpoints, background workers and automated CI/CD pipelines.",
+	},
+	{
+		title: "Project Six",
+		sub: "Vue 3 · D3.js · WebSockets",
+		desc: "Live analytics dashboard streaming data over WebSockets into interactive, animated visualizations.",
+	},
+	{
+		title: "Project Seven",
+		sub: "Svelte · Three.js · GLSL",
+		desc: "Experimental 3D web experience with custom shaders, scroll-driven camera paths and generative visuals.",
+	},
 ];
-
-const N_CARDS = projectCards.length;
-
-function computeCardSwapConfig() {
-	const vw = window.innerWidth;
-	const vh = window.innerHeight;
-	const cardWidth = Math.round(Math.min(vw * 0.72, 1400));
-	const cardHeight = Math.round((cardWidth * 9) / 16);
-	// front card: bottom-left at (7vw, 7vh) — matches CSS bottom/left
-	// back  card: top-right  at (4vw, 4vh) — enforced by the spread formula
-	const cardDistance = Math.floor((vw - cardWidth - vw * 0.07 - vw * 0.04) / (N_CARDS - 1));
-	const verticalDistance = Math.max(10, Math.floor((vh - cardHeight - vh * 0.07 * 2) / (N_CARDS - 1)));
-	return { cardWidth, cardHeight, cardDistance, verticalDistance };
-}
 
 function ScrollHint({ isLandscape, direction = "next", onClick }) {
 	const isNext = direction === "next";
@@ -352,7 +365,6 @@ export default function App() {
 	);
 	const [winStart, setWinStart] = useState(0);
 	const [photoPositions, setPhotoPositions] = useState(computePhotoPositions);
-	const [csConfig, setCsConfig] = useState(computeCardSwapConfig);
 	const [hoveredEvent, setHoveredEvent] = useState(null);
 	// Default to first item with images (Bonobo = index 1)
 	const [selectedEvent, setSelectedEvent] = useState(1);
@@ -525,6 +537,18 @@ export default function App() {
 		let lastWheelTime = 0;
 
 		const onWheel = (e) => {
+			// Inside the projects list, let the native scroll run; only
+			// change slide once the list is at its boundary.
+			const scroller = e.target.closest?.(".projects-scroll");
+			if (scroller) {
+				const atTop = scroller.scrollTop <= 0;
+				const atBottom =
+					scroller.scrollTop + scroller.clientHeight >=
+					scroller.scrollHeight - 1;
+				if (e.deltaY > 0 && !atBottom) return;
+				if (e.deltaY < 0 && !atTop) return;
+			}
+
 			const now = Date.now();
 			if (now - lastWheelTime < 1000) return;
 			lastWheelTime = now;
@@ -567,6 +591,18 @@ export default function App() {
 			const dx = touchStartX - e.changedTouches[0].clientX;
 			const dy = touchStartY - e.changedTouches[0].clientY;
 
+			// In portrait the slide swipe is vertical, like the projects
+			// list scroll — defer to the list until it hits a boundary.
+			const scroller = e.target.closest?.(".projects-scroll");
+			if (!isLandscape && scroller) {
+				const atTop = scroller.scrollTop <= 0;
+				const atBottom =
+					scroller.scrollTop + scroller.clientHeight >=
+					scroller.scrollHeight - 1;
+				if (dy > 0 && !atBottom) return;
+				if (dy < 0 && !atTop) return;
+			}
+
 			if (isLandscape) {
 				if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
 					goTo(currentSlide + (dx > 0 ? 1 : -1));
@@ -589,10 +625,27 @@ export default function App() {
 	useEffect(() => {
 		const onResize = () => {
 			setPhotoPositions(computePhotoPositions());
-			setCsConfig(computeCardSwapConfig());
 		};
 		window.addEventListener("resize", onResize);
 		return () => window.removeEventListener("resize", onResize);
+	}, []);
+
+	// Reveal project rows as they scroll into view (one-shot per row).
+	useEffect(() => {
+		const rows = document.querySelectorAll(".proj-row");
+		const observer = new IntersectionObserver(
+			(entries) => {
+				entries.forEach((entry) => {
+					if (entry.isIntersecting) {
+						entry.target.classList.add("proj-row--in");
+						observer.unobserve(entry.target);
+					}
+				});
+			},
+			{ threshold: 0.2 },
+		);
+		rows.forEach((row) => observer.observe(row));
+		return () => observer.disconnect();
 	}, []);
 
 	// When navigating the timeline window, select the first visible item with images.
@@ -1027,20 +1080,19 @@ export default function App() {
 						<span className="exp-overline">Work</span>
 						<h2 className="exp-title">Projects</h2>
 					</header>
-					<div className="projects-cards">
-						<CardSwap
-							width={csConfig.cardWidth}
-							height={csConfig.cardHeight}
-							cardDistance={csConfig.cardDistance}
-							verticalDistance={csConfig.verticalDistance}
-							delay={3000}
-							pauseOnHover
-							easing="elastic"
-							skewAmount={0}
-						>
+					<div className="projects-scroll">
+						<ol className="proj-list">
 							{projectCards.map((p, i) => (
-								<Card key={i} customClass="project-card">
-									<div className="project-card-inner">
+								<li
+									key={i}
+									className={`proj-row${i % 2 ? " proj-row--flip" : ""}`}
+								>
+									<div className="proj-media">
+										<span className="proj-media-num">
+											{String(i + 1).padStart(2, "0")}
+										</span>
+									</div>
+									<div className="proj-info">
 										<span className="project-num">
 											0{i + 1}
 										</span>
@@ -1048,10 +1100,11 @@ export default function App() {
 											{p.title}
 										</h3>
 										<p className="project-sub">{p.sub}</p>
+										<p className="proj-desc">{p.desc}</p>
 									</div>
-								</Card>
+								</li>
 							))}
-						</CardSwap>
+						</ol>
 					</div>
 					<ScrollHint
 						isLandscape={isLandscape}
